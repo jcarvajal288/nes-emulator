@@ -49,39 +49,40 @@ impl Olc6502 {
 
     // Addressing Modes
     // region
-    fn ACC() -> u8 { // Accumulator Addressing
+    fn ACC(&self) -> u8 { // Accumulator Addressing
         return 0x0;
     }
 
-    fn IMM() -> u8 { // Immediate
+    fn IMM(&self) -> u8 { // Immediate
         return 0x0; 
     }
 
-    fn ABS() -> u8 { // Absolute Addressing
+    fn ABS(&self) -> u8 { // Absolute Addressing
         return 0x0; 
     }
 
-    fn ZP0() -> u8 { // Zero Page Addressing
+    fn ZP0(&self) -> u8 { // Zero Page Addressing
         return 0x0; 
     }
 
-    fn ZPX() -> u8 { // Indexed Zero Page Addressing X
+    fn ZPX(&self) -> u8 { // Indexed Zero Page Addressing X
         return 0x0; 
     }
 
-    fn ZPY() -> u8 { // Indexed Zero Page Addressing Y
+    fn ZPY(&self) -> u8 { // Indexed Zero Page Addressing Y
         return 0x0; 
     }
 
-    fn ABX() -> u8 { // Indexed Absolute Adressing X
+    fn ABX(&self) -> u8 { // Indexed Absolute Adressing X
         return 0x0; 
     }
 
-    fn ABY() -> u8 { // Indexed Absolute Adressing Y
+    fn ABY(&self) -> u8 { // Indexed Absolute Adressing Y
         return 0x0; 
     }
 
-    fn IMP() -> u8 { // Implied
+    fn IMP(&self) -> u8 { // Implied
+        self.fetched_data = self.accumulator;
         return 0x0; 
     }
 
@@ -104,231 +105,231 @@ impl Olc6502 {
 
     // Opcodes
     // region
-    fn ADC() -> u8 { // Add Memory to Accumulator with Carry
+    fn ADC(&self) -> u8 { // Add Memory to Accumulator with Carry
         return 0x0; 
     }
 
-    fn AND() -> u8 { // "AND" Memory with Accumulator
+    fn AND(&self) -> u8 { // "AND" Memory with Accumulator
         return 0x0; 
     }
 
-    fn ASL() -> u8 { // Shift Left One Bit (Memory or Accumulator)
+    fn ASL(&self) -> u8 { // Shift Left One Bit (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn BCC() -> u8 { // Branch on Carry Clear
+    fn BCC(&self) -> u8 { // Branch on Carry Clear
         return 0x0; 
     }
 
-    fn BCS() -> u8 { // Branch on Carry Set
+    fn BCS(&self) -> u8 { // Branch on Carry Set
         return 0x0; 
     }
 
-    fn BEQ() -> u8 { // Branch on Result Zero
+    fn BEQ(&self) -> u8 { // Branch on Result Zero
         return 0x0; 
     }
 
-    fn BIT() -> u8 { // Test Bits in Memory with Accumulator
+    fn BIT(&self) -> u8 { // Test Bits in Memory with Accumulator
         return 0x0; 
     }
 
-    fn BMI() -> u8 { // Branch on Result Minus
+    fn BMI(&self) -> u8 { // Branch on Result Minus
         return 0x0; 
     }
 
-    fn BNE() -> u8 { // Branch on Result not Zero
+    fn BNE(&self) -> u8 { // Branch on Result not Zero
         return 0x0; 
     }
 
-    fn BPL() -> u8 { // Branch on Result Plus
+    fn BPL(&self) -> u8 { // Branch on Result Plus
         return 0x0; 
     }
 
-    fn BRK() -> u8 { // Force Break
+    fn BRK(&self) -> u8 { // Force Break
         return 0x0; 
     }
 
-    fn BVC() -> u8 { // Branch on Overflow Clear
+    fn BVC(&self) -> u8 { // Branch on Overflow Clear
         return 0x0; 
     }
 
-    fn BVS() -> u8 { // Branch on Overflow Set
+    fn BVS(&self) -> u8 { // Branch on Overflow Set
         return 0x0; 
     }
 
-    fn CLC() -> u8 { // Clear Carry Flag
+    fn CLC(&self) -> u8 { // Clear Carry Flag
         return 0x0; 
     }
 
-    fn CLD() -> u8 { // Clear Decimal Mode
+    fn CLD(&self) -> u8 { // Clear Decimal Mode
         return 0x0; 
     }
 
-    fn CLI() -> u8 { // Clear Interrupt Disable Bit
+    fn CLI(&self) -> u8 { // Clear Interrupt Disable Bit
         return 0x0; 
     }
 
-    fn CLV() -> u8 { // Clear Overflow Flag
+    fn CLV(&self) -> u8 { // Clear Overflow Flag
         return 0x0; 
     }
 
-    fn CMP() -> u8 { // Compare Memory And Accumulator
+    fn CMP(&self) -> u8 { // Compare Memory And Accumulator
         return 0x0; 
     }
 
-    fn CPX() -> u8 { // Compare Memory and Index X
+    fn CPX(&self) -> u8 { // Compare Memory and Index X
         return 0x0; 
     }
 
-    fn CPY() -> u8 { // Compare Memory And Index Y
+    fn CPY(&self) -> u8 { // Compare Memory And Index Y
         return 0x0; 
     }
 
-    fn DEC() -> u8 { // Decrement Memory by One
+    fn DEC(&self) -> u8 { // Decrement Memory by One
         return 0x0; 
     }
 
-    fn DEX() -> u8 { // Decrement Index X by One
+    fn DEX(&self) -> u8 { // Decrement Index X by One
         return 0x0; 
     }
 
-    fn DEY() -> u8 { // Decrement Index Y by One
+    fn DEY(&self) -> u8 { // Decrement Index Y by One
         return 0x0; 
     }
 
-    fn EOR() -> u8 { // "Exclusive-OR" Memory with Accumulator
+    fn EOR(&self) -> u8 { // "Exclusive-OR" Memory with Accumulator
         return 0x0; 
     }
 
-    fn INC() -> u8 { // Increment Memory by One
+    fn INC(&self) -> u8 { // Increment Memory by One
         return 0x0; 
     }
 
-    fn INX() -> u8 { // Increment Index X by One
+    fn INX(&self) -> u8 { // Increment Index X by One
         return 0x0; 
     }
 
-    fn INY() -> u8 { // Increment Index Y by One
+    fn INY(&self) -> u8 { // Increment Index Y by One
         return 0x0; 
     }
 
-    fn JMP() -> u8 { // Jump to New Location
+    fn JMP(&self) -> u8 { // Jump to New Location
         return 0x0; 
     }
 
-    fn JSR() -> u8 { // Jump to New Location Saving Return Address
+    fn JSR(&self) -> u8 { // Jump to New Location Saving Return Address
         return 0x0; 
     }
 
-    fn LDA() -> u8 { // Load Accumulator with Memory
+    fn LDA(&self) -> u8 { // Load Accumulator with Memory
         return 0x0; 
     }
 
-    fn LDX() -> u8 { // Load Index X with Memory
+    fn LDX(&self) -> u8 { // Load Index X with Memory
         return 0x0; 
     }
 
-    fn LDY() -> u8 { // Load Index Y with Memory
+    fn LDY(&self) -> u8 { // Load Index Y with Memory
         return 0x0; 
     }
 
-    fn LSR() -> u8 { // Shift One Bit Right (Memory or Accumulator)
+    fn LSR(&self) -> u8 { // Shift One Bit Right (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn NOP() -> u8 { // No Operation
+    fn NOP(&self) -> u8 { // No Operation
         return 0x0; 
     }
 
-    fn ORA() -> u8 { // "OR" Memory with Accumulator
+    fn ORA(&self) -> u8 { // "OR" Memory with Accumulator
         return 0x0; 
     }
 
-    fn PHA() -> u8 { // Push Accumulator on Stack
+    fn PHA(&self) -> u8 { // Push Accumulator on Stack
         return 0x0; 
     }
 
-    fn PHP() -> u8 { // Push Processor Status on Stack
+    fn PHP(&self) -> u8 { // Push Processor Status on Stack
         return 0x0; 
     }
 
-    fn PLA() -> u8 { // Pull Accumulator from Stack
+    fn PLA(&self) -> u8 { // Pull Accumulator from Stack
         return 0x0; 
     }
 
-    fn PLP() -> u8 { // Pull Processor Status from Stack
+    fn PLP(&self) -> u8 { // Pull Processor Status from Stack
         return 0x0; 
     }
 
-    fn ROL() -> u8 { // Rotate One Bit Left (Memory or Accumulator)
+    fn ROL(&self) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn ROR() -> u8 { // Rotate One Bit Right (Memory or Accumulator)
+    fn ROR(&self) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn RTI() -> u8 { // Return from Interrupt
+    fn RTI(&self) -> u8 { // Return from Interrupt
         return 0x0; 
     }
 
-    fn RTS() -> u8 { // Return from Subroutine
+    fn RTS(&self) -> u8 { // Return from Subroutine
         return 0x0; 
     }
 
-    fn SBC() -> u8 { // Subtract Memory from Accumulator with Borrow
+    fn SBC(&self) -> u8 { // Subtract Memory from Accumulator with Borrow
         return 0x0; 
     }
 
-    fn SEC() -> u8 { // Set Carry Flag
+    fn SEC(&self) -> u8 { // Set Carry Flag
         return 0x0; 
     }
 
-    fn SED() -> u8 { // Set Decimal Mode (unused)
+    fn SED(&self) -> u8 { // Set Decimal Mode (unused)
         return 0x0; 
     }
 
-    fn SEI() -> u8 { // Set Interrupt Disable Status
+    fn SEI(&self) -> u8 { // Set Interrupt Disable Status
         return 0x0; 
     }
 
-    fn STA() -> u8 { // Store Accumulator in Memory
+    fn STA(&self) -> u8 { // Store Accumulator in Memory
         return 0x0; 
     }
 
-    fn STX() -> u8 { // Store Index X in Memory
+    fn STX(&self) -> u8 { // Store Index X in Memory
         return 0x0; 
     }
 
-    fn STY() -> u8 { // Store Index Y in Memory
+    fn STY(&self) -> u8 { // Store Index Y in Memory
         return 0x0; 
     }
 
-    fn TAX() -> u8 { // Transfer Accumulator to Index X
+    fn TAX(&self) -> u8 { // Transfer Accumulator to Index X
         return 0x0; 
     }
 
-    fn TAY() -> u8 { // Transfer Accumulator to Index Y
+    fn TAY(&self) -> u8 { // Transfer Accumulator to Index Y
         return 0x0; 
     }
 
-    fn TSX() -> u8 { // Transfer Stack Pointer to Index X
+    fn TSX(&self) -> u8 { // Transfer Stack Pointer to Index X
         return 0x0; 
     }
 
-    fn TXA() -> u8 { // Transfer Index X to Accumulator
+    fn TXA(&self) -> u8 { // Transfer Index X to Accumulator
         return 0x0; 
     }
 
-    fn TXS() -> u8 { // Transfer Index X to Stack Register
+    fn TXS(&self) -> u8 { // Transfer Index X to Stack Register
         return 0x0; 
     }
 
-    fn TYA() -> u8 { // Transfer Index Y to Accumulator
+    fn TYA(&self) -> u8 { // Transfer Index Y to Accumulator
         return 0x0; 
     }
 
-    fn XXX() -> u8 { // Undefined Instruction
+    fn XXX(&self) -> u8 { // Undefined Instruction
         return 0x0; 
     }
     // endregion
