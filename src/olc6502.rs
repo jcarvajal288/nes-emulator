@@ -28,7 +28,7 @@ pub struct Olc6502 {
     opcode: u8,
     cycles: u8,
 
-    lookup: Vec<instruction::Instruction>,
+    lookup: [Instruction; 256],
 }
 
 
@@ -49,51 +49,55 @@ impl Olc6502 {
 
     // Addressing Modes
     // region
-    fn IMP() -> u8 { 
+    fn ACC() -> u8 { // Accumulator Addressing
+        return 0x0;
+    }
+
+    fn IMM() -> u8 { // Immediate
         return 0x0; 
     }
 
-    fn IMM() -> u8 { 
+    fn ABS() -> u8 { // Absolute Addressing
         return 0x0; 
     }
 
-    fn ZP0() -> u8 { 
+    fn ZP0() -> u8 { // Zero Page Addressing
         return 0x0; 
     }
 
-    fn ZPX() -> u8 { 
+    fn ZPX() -> u8 { // Indexed Zero Page Addressing X
         return 0x0; 
     }
 
-    fn ZPY() -> u8 { 
+    fn ZPY() -> u8 { // Indexed Zero Page Addressing Y
         return 0x0; 
     }
 
-    fn REL() -> u8 { 
+    fn ABX() -> u8 { // Indexed Absolute Adressing X
         return 0x0; 
     }
 
-    fn ABS() -> u8 { 
+    fn ABY() -> u8 { // Indexed Absolute Adressing Y
         return 0x0; 
     }
 
-    fn ABX() -> u8 { 
+    fn IMP() -> u8 { // Implied
         return 0x0; 
     }
 
-    fn ABY() -> u8 { 
+    fn REL() -> u8 { // Relative Adressing
         return 0x0; 
     }
 
-    fn IND() -> u8 { 
+    fn IZX() -> u8 { // Indexed Indirect Addressing X
         return 0x0; 
     }
 
-    fn IZX() -> u8 { 
+    fn IZY() -> u8 { // Indirect Indexed Addressing Y
         return 0x0; 
     }
 
-    fn IZY() -> u8 { 
+    fn IND() -> u8 { // Absolute Indirect
         return 0x0; 
     }
     // endregion
@@ -323,7 +327,38 @@ impl Olc6502 {
     fn TYA() -> u8 { // Transfer Index Y to Accumulator
         return 0x0; 
     }
+
+    fn XXX() -> u8 { // Undefined Instruction
+        return 0x0; 
+    }
     // endregion
+
+    fn populate_lookup_table(&self) {
+        type A = Olc6502;
+        fn i(name: &str, operate: fn() -> u8, addrmode: fn() -> u8, cycles: u8) -> Instruction {
+            return Instruction { name: String::from(name), operate, addrmode, cycles };
+        }
+
+        self.lookup = [
+            i("BRK", A::BRK, A::IMP, 7), i("ORA", A::ORA, A::IZX, 6), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("ORA", A::ORA, A::ZP0, 3), i("ASL", A::ASL, A::ZP0, 5), i("???", A::XXX, A::IMP, 2),  i("PHP" A::PHP, A::IMP, 3), i("ORA", A::ORA, A::IMM, 2), i("ASL", A::ASL, A::ACC, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("ORA", A::ORA, A::ABS, 4), i("ASL", A::XXX, A::ABS, 6), i("???", A::XXX, A::IMP, 2),
+            i("BPL", A::BPL, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("JSR", A::JSR, A::ABS, 6), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BMI", A::BMI, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("RTI", A::RTI, A::IMP, 6), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BVC", A::BVC, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("RTS", A::RTS, A::IMP, 6), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BVS", A::BVS, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BCC", A::BCC, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("LDY", A::LDY, A::IMM, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BCS", A::BCS, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("CPY", A::CPY, A::IMM, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BNE", A::BNE, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("CPX", A::CPX, A::IMM, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+            i("BEQ", A::BEQ, A::REL, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), i("???", A::XXX, A::IMP, 2), 
+        ];
+
+    }
 
     fn clock(&self) {
         if self.cycles == 0 {
@@ -343,18 +378,12 @@ impl Olc6502 {
     // fn nmi() {}
 
     // fn fetch -> u8 {}
-
-    pub fn lookup(&self, opcode: String) -> Instruction {
-        match opcode {
-            return Instruction { name: opcode, operate: }
-        }
-    }
 }
 
 struct Instruction {
     name: String,
-    operate: fn(),
-    addrmode: fn(),
+    operate: fn() -> u8,
+    addrmode: fn() -> u8,
     cycles: u8,
 }
 
