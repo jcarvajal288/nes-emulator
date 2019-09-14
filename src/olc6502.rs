@@ -368,10 +368,16 @@ impl Olc6502 {
             // Get starting number of cycles
             let op_index = usize::from(self.opcode);
             self.cycles = self.lookup[op_index].cycles;
-            (self.lookup[op_index].addrmode)();
-            (self.lookup[op_index].operate)();
-            // at 29:10
+
+            // execute next instruction
+            let additional_cycle1: u8 = (self.lookup[op_index].addrmode)();
+            let additional_cycle2: u8 = (self.lookup[op_index].operate)();
+
+            // add additional cycles if necessary
+            self.cycles += additional_cycle1 & additional_cycle2;
         }
+
+        self.cycles -= 1;
     }
     // fn reset() {}
     // fn irq() {}
