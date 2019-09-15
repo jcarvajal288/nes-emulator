@@ -5,6 +5,12 @@ pub struct Bus {
     ram: [u8; 64 * 1024],
 }
 
+impl PartialEq for Bus {
+    fn eq(&self, other: &Bus) -> bool {
+        self.ram[..] == other.ram[..]
+    }
+}
+
 impl Bus {
     pub fn reset_ram(mut self) {
         for i in 0..self.ram.len() {

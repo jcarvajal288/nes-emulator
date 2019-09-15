@@ -30,6 +30,23 @@ pub struct Olc6502 {
     lookup: [Instruction; 256],
 }
 
+impl PartialEq for Olc6502 {
+    fn eq(&self, other: &Olc6502) -> bool {
+        self.accumulator == other.accumulator &&
+        self.x_reg == other.x_reg &&
+        self.y_reg == other.y_reg &&
+        self.stack_ptr == other.stack_ptr &&
+        self.prog_ctr == other.prog_ctr &&
+        self.status_reg == other.status_reg &&
+        self.bus == other.bus &&
+        self.fetched_data == other.fetched_data &&
+        self.addr_abs == other.addr_abs &&
+        self.addr_rel == other.addr_rel &&
+        self.opcode == other.opcode &&
+        self.cycles == other.cycles 
+    }
+}
+
 
 impl Olc6502 {
     #[allow(non_snake_case)]
@@ -603,13 +620,22 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn IMM_test() {
+    fn am_IMM_test() {
         let mut o: Olc6502 = create_olc6502();
         o.bus.write(0x24, 0x74);
         o.bus.write(0x25, 0xBB);
         o.prog_ctr = 0x24;
         IMM(&mut o);
         assert!(o.addr_abs == 0xBB);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_IMP_test() {
+        let mut test: Olc6502 = create_olc6502();
+        let reference: Olc6502 = create_olc6502();
+        IMM(&mut test);
+        assert!(test == reference);
     }
 
     #[test]
