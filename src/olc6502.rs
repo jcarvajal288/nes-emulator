@@ -592,7 +592,17 @@ mod tests {
     // addressing mode tests
     // region
     #[test]
-    fn zero_page_x_indexed_normal() {
+    #[allow(non_snake_case)]
+    fn ACC_test() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x65;
+        ACC(&mut o);
+        assert!(o.fetched_data == 0x65);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn IZX_normal() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x24;
         o.bus.write(0x24, 0x74);
@@ -602,7 +612,8 @@ mod tests {
     }
 
     #[test]
-    fn zero_page_x_indexed_wrapped() {
+    #[allow(non_snake_case)]
+    fn IZX_wrapped() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xFF;
         o.prog_ctr = 0x10;
