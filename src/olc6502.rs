@@ -78,9 +78,15 @@ impl Olc6502 {
 
     //fn get_flag(flag: Flags6502) -> u8 { }
 
-    fn set_flag(_flag: Flags6502, _v: bool) {
-
+        /*
+    fn set_flag(mut self, flag: Flags6502, v: bool) {
+        if v == true {
+            self.status_reg |= flag;
+        } else {
+            self.status_reg &= !flag;
+        }
     }
+        */
 
     fn clock(mut self) {
         if self.cycles == 0 {
@@ -171,8 +177,8 @@ fn ACC(o: &mut Olc6502) -> u8 { // Accumulator Addressing
 
 #[allow(non_snake_case)]
 fn IMM(o: &mut Olc6502) -> u8 { // Immediate
-    let value: u16 = u16::from(o.bus.read(o.prog_ctr + 1));
-    o.addr_abs = value & 0x00FF;
+    o.addr_abs = o.prog_ctr;
+    o.prog_ctr += 1;
     return 0; 
 }
 
@@ -250,16 +256,24 @@ fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
 
 #[allow(non_snake_case)]
 fn IMP(_: &mut Olc6502) -> u8 { // Implied
+    //o.fetched_data = o.accumulator;
     return 0; 
 }
 
 #[allow(non_snake_case)]
-fn REL(o: &mut Olc6502) -> u8 { // Relative Adressing
+fn REL(o: &mut Olc6502) -> u8 { // Relative Addressing
+    // javidx9 saves the offset as its own 'addr_rel' variable and
+    // computes the final address later, probably in the opcode instruction
+    /* 
     o.addr_rel = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
     if o.addr_rel & 0x80 == 1 {
         o.addr_rel |= 0xFF00;
     }
+    */
+    let offset: u8 = o.read(o.prog_ctr);
+    o.addr_abs = o.prog_ctr + u16::from(offset);
+    o.prog_ctr += 1;
     return 0;
 }
 
@@ -612,7 +626,7 @@ mod tests {
     // region
     #[test]
     #[allow(non_snake_case)]
-    fn ACC_test() {
+    fn am_ACC_test() {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x65;
         ACC(&mut o);
@@ -623,11 +637,9 @@ mod tests {
     #[allow(non_snake_case)]
     fn am_IMM_test() {
         let mut o: Olc6502 = create_olc6502();
-        o.bus.write(0x24, 0x74);
-        o.bus.write(0x25, 0xBB);
-        o.prog_ctr = 0x24;
+        let current_addr: u16 = o.prog_ctr;
         IMM(&mut o);
-        assert!(o.addr_abs == 0xBB);
+        assert!(o.addr_abs == current_addr);
     }
 
     #[test]
@@ -635,13 +647,26 @@ mod tests {
     fn am_IMP_test() {
         let mut test: Olc6502 = create_olc6502();
         let reference: Olc6502 = create_olc6502();
-        IMM(&mut test);
+        IMP(&mut test);
         assert!(test == reference);
     }
 
     #[test]
     #[allow(non_snake_case)]
-    fn IZX_normal() {
+    fn am_REL_positive_no_wrap() {
+        let mut o: Olc6502 = create_olc6502();
+        let offset: u8 = 0x20;
+        let current_addr: u16 = 0x24;
+        o.prog_ctr = current_addr;
+        o.bus.write(current_addr, offset);
+        REL(&mut o);
+        let new_addr: u16 = current_addr + u16::from(offset);
+        assert!(o.addr_abs == new_addr);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_IZX_normal() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x24;
         o.bus.write(0x24, 0x74);
