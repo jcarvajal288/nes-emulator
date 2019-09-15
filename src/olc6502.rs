@@ -592,11 +592,13 @@ mod tests {
     // addressing mode tests
     // region
     #[test]
-    #[allow(non_snake_case)]
-    fn zero_page_x_indexed() {
+    fn zero_page_x_indexed_normal() {
         let mut o: Olc6502 = create_olc6502();
-        o.x_reg = 0x04;
-        assert!(true);
+        o.x_reg = 0x24;
+        o.bus.write(0x24, 0x74);
+        o.bus.write(0x25, 0x20);
+        IZX(&mut o);
+        assert!(o.addr_abs == 0x2074);
     }
     // endregion
 }
