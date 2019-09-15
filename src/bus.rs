@@ -12,7 +12,7 @@ impl Bus {
         }
     }
 
-    pub fn write(mut self, addr: u16, data: u8) {
+    pub fn write(&mut self, addr: u16, data: u8) {
         if addr >= 0x0000 && addr <= 0xFFFF {
             self.ram[usize::from(addr)] = data;
         }
@@ -25,5 +25,23 @@ impl Bus {
             return self.ram[usize::from(addr)];
         }
         return 0x00;
+    }
+}
+
+pub fn create_Bus() -> Bus {
+    return Bus {
+        ram: [0x0; 64 * 1024],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn write() {
+        let mut b: Bus = create_Bus();
+        b.write(0x24, 0x20);
+        assert!(b.ram[0x24] == 0x20);
     }
 }

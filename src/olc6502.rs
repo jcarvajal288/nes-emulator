@@ -12,7 +12,6 @@ enum Flags6502 {
 }
 
 pub struct Olc6502 {
-    flags: Flags6502,
     accumulator: u8,
     x_reg: u8,
     y_reg: u8,
@@ -48,7 +47,6 @@ impl Olc6502 {
         self.cycles = 0;
         self.lookup = populate_lookup_table();
         self.bus.reset_ram();
-
     }
 
     fn read(&self, addr: u16) -> u8 {
@@ -89,6 +87,25 @@ impl Olc6502 {
     // fn nmi() {}
 
     // fn fetch -> u8 {}
+}
+
+fn create_olc6502() -> Olc6502 {
+    let o = Olc6502 {
+        accumulator: 0,
+        x_reg: 0,
+        y_reg: 0,
+        stack_ptr: 0,
+        prog_ctr: 0,
+        status_reg: 0,
+        bus: bus::create_Bus(),
+        fetched_data: 0,
+        addr_abs: 0,
+        addr_rel: 0,
+        opcode: 0,
+        cycles: 0,
+        lookup: populate_lookup_table(),
+    };
+    return o;
 }
 
 struct Instruction {
@@ -505,8 +522,9 @@ mod tests {
     // region
     #[test]
     fn zero_page_x_indexed() {
-        let o: Olc6502;
-
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x04;
+        assert!(true);
     }
     // endregion
 }
