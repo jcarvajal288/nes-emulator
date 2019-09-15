@@ -32,6 +32,7 @@ pub struct Olc6502 {
 
 
 impl Olc6502 {
+    #[allow(non_snake_case)]
     fn reset(mut self) {
         self.accumulator = 0;
         self.x_reg = 0;
@@ -97,7 +98,7 @@ fn create_olc6502() -> Olc6502 {
         stack_ptr: 0,
         prog_ctr: 0,
         status_reg: 0,
-        bus: bus::create_Bus(),
+        bus: bus::create_bus(),
         fetched_data: 0,
         addr_abs: 0,
         addr_rel: 0,
@@ -144,16 +145,19 @@ fn populate_lookup_table() -> [Instruction; 256] {
 
 // Addressing Modes
 // region
+#[allow(non_snake_case)]
 fn ACC(o: &mut Olc6502) -> u8 { // Accumulator Addressing
     o.fetched_data = o.accumulator;
     return 0;
 }
 
+#[allow(non_snake_case)]
 fn IMM(o: &mut Olc6502) -> u8 { // Immediate
     o.addr_abs = o.prog_ctr & 0x00FF;
     return 0; 
 }
 
+#[allow(non_snake_case)]
 fn ABS(o: &mut Olc6502) -> u8 { // Absolute Addressing
     let lo: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -165,6 +169,7 @@ fn ABS(o: &mut Olc6502) -> u8 { // Absolute Addressing
     return 0; 
 }
 
+#[allow(non_snake_case)]
 fn ZP0(o: &mut Olc6502) -> u8 { // Zero Page Addressing
     o.addr_abs = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -172,6 +177,7 @@ fn ZP0(o: &mut Olc6502) -> u8 { // Zero Page Addressing
     return 0;    
 }
 
+#[allow(non_snake_case)]
 fn ZPX(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
     o.addr_abs = u16::from(o.read(o.prog_ctr) + o.x_reg);
     o.prog_ctr += 1;
@@ -179,6 +185,7 @@ fn ZPX(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
     return 0; 
 }
 
+#[allow(non_snake_case)]
 fn ZPY(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing Y
     o.addr_abs = u16::from(o.read(o.prog_ctr) + o.y_reg);
     o.prog_ctr += 1;
@@ -186,6 +193,7 @@ fn ZPY(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing Y
     return 0; 
 }
 
+#[allow(non_snake_case)]
 fn ABX(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing X
     let lo: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -203,6 +211,7 @@ fn ABX(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing X
     }
 }
 
+#[allow(non_snake_case)]
 fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
     let lo: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -220,10 +229,12 @@ fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
     }
 }
 
+#[allow(non_snake_case)]
 fn IMP(o: &mut Olc6502) -> u8 { // Implied
     return 0; 
 }
 
+#[allow(non_snake_case)]
 fn REL(o: &mut Olc6502) -> u8 { // Relative Adressing
     o.addr_rel = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -233,6 +244,7 @@ fn REL(o: &mut Olc6502) -> u8 { // Relative Adressing
     return 0;
 }
 
+#[allow(non_snake_case)]
 fn IZX(o: &mut Olc6502) -> u8 { // Indexed Indirect Addressing X
     let t: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -247,6 +259,7 @@ fn IZX(o: &mut Olc6502) -> u8 { // Indexed Indirect Addressing X
     return 0;
 }
 
+#[allow(non_snake_case)]
 fn IZY(o: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
     let t: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -264,6 +277,7 @@ fn IZY(o: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
     }
 }
 
+#[allow(non_snake_case)]
 fn IND(o: &mut Olc6502) -> u8 { // Absolute Indirect
     let ptr_lo: u16 = u16::from(o.read(o.prog_ctr));
     o.prog_ctr += 1;
@@ -284,230 +298,287 @@ fn IND(o: &mut Olc6502) -> u8 { // Absolute Indirect
 
 // Opcodes
 // region
+#[allow(non_snake_case)]
 fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn AND(o: &mut Olc6502) -> u8 { // "AND" Memory with Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn ASL(o: &mut Olc6502) -> u8 { // Shift Left One Bit (Memory or Accumulator)
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BCC(o: &mut Olc6502) -> u8 { // Branch on Carry Clear
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BCS(o: &mut Olc6502) -> u8 { // Branch on Carry Set
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BEQ(o: &mut Olc6502) -> u8 { // Branch on Result Zero
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BIT(o: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BMI(o: &mut Olc6502) -> u8 { // Branch on Result Minus
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BNE(o: &mut Olc6502) -> u8 { // Branch on Result not Zero
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BPL(o: &mut Olc6502) -> u8 { // Branch on Result Plus
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BRK(o: &mut Olc6502) -> u8 { // Force Break
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BVC(o: &mut Olc6502) -> u8 { // Branch on Overflow Clear
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn BVS(o: &mut Olc6502) -> u8 { // Branch on Overflow Set
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CLC(o: &mut Olc6502) -> u8 { // Clear Carry Flag
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CLD(o: &mut Olc6502) -> u8 { // Clear Decimal Mode
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CLI(o: &mut Olc6502) -> u8 { // Clear Interrupt Disable Bit
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CLV(o: &mut Olc6502) -> u8 { // Clear Overflow Flag
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CMP(o: &mut Olc6502) -> u8 { // Compare Memory And Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CPX(o: &mut Olc6502) -> u8 { // Compare Memory and Index X
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn CPY(o: &mut Olc6502) -> u8 { // Compare Memory And Index Y
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn DEY(o: &mut Olc6502) -> u8 { // Decrement Index Y by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn EOR(o: &mut Olc6502) -> u8 { // "Exclusive-OR" Memory with Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn INC(o: &mut Olc6502) -> u8 { // Increment Memory by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn INX(o: &mut Olc6502) -> u8 { // Increment Index X by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn INY(o: &mut Olc6502) -> u8 { // Increment Index Y by One
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn JMP(o: &mut Olc6502) -> u8 { // Jump to New Location
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn LDA(o: &mut Olc6502) -> u8 { // Load Accumulator with Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn LDX(o: &mut Olc6502) -> u8 { // Load Index X with Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn LDY(o: &mut Olc6502) -> u8 { // Load Index Y with Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn LSR(o: &mut Olc6502) -> u8 { // Shift One Bit Right (Memory or Accumulator)
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn NOP(o: &mut Olc6502) -> u8 { // No Operation
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn ORA(o: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn ROL(o: &mut Olc6502) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn SBC(o: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn SEC(o: &mut Olc6502) -> u8 { // Set Carry Flag
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn SED(o: &mut Olc6502) -> u8 { // Set Decimal Mode (unused)
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn SEI(o: &mut Olc6502) -> u8 { // Set Interrupt Disable Status
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn STA(o: &mut Olc6502) -> u8 { // Store Accumulator in Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn STX(o: &mut Olc6502) -> u8 { // Store Index X in Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn STY(o: &mut Olc6502) -> u8 { // Store Index Y in Memory
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TAX(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index X
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TAY(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index Y
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TSX(o: &mut Olc6502) -> u8 { // Transfer Stack Pointer to Index X
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TXA(o: &mut Olc6502) -> u8 { // Transfer Index X to Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TXS(o: &mut Olc6502) -> u8 { // Transfer Index X to Stack Register
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn TYA(o: &mut Olc6502) -> u8 { // Transfer Index Y to Accumulator
     return 0x0; 
 }
 
+#[allow(non_snake_case)]
 fn XXX(o: &mut Olc6502) -> u8 { // Undefined Instruction
     return 0x0; 
 }
@@ -521,6 +592,7 @@ mod tests {
     // addressing mode tests
     // region
     #[test]
+    #[allow(non_snake_case)]
     fn zero_page_x_indexed() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x04;
