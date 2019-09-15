@@ -153,7 +153,8 @@ fn ACC(o: &mut Olc6502) -> u8 { // Accumulator Addressing
 
 #[allow(non_snake_case)]
 fn IMM(o: &mut Olc6502) -> u8 { // Immediate
-    o.addr_abs = o.prog_ctr & 0x00FF;
+    let value: u16 = u16::from(o.bus.read(o.prog_ctr + 1));
+    o.addr_abs = value & 0x00FF;
     return 0; 
 }
 
@@ -598,6 +599,17 @@ mod tests {
         o.accumulator = 0x65;
         ACC(&mut o);
         assert!(o.fetched_data == 0x65);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn IMM_test() {
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.write(0x24, 0x74);
+        o.bus.write(0x25, 0xBB);
+        o.prog_ctr = 0x24;
+        IMM(&mut o);
+        assert!(o.addr_abs == 0xBB);
     }
 
     #[test]
