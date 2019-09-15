@@ -17,7 +17,7 @@ pub struct Olc6502 {
     x_reg: u8,
     y_reg: u8,
     stack_ptr: u8,
-    prog_ctr: u8,
+    prog_ctr: u16,
     status_reg: u8,
 
     bus: bus::Bus,
@@ -76,7 +76,7 @@ impl Olc6502 {
 
     fn clock(mut self) {
         if self.cycles == 0 {
-            self.opcode = self.read(u16::from(self.prog_ctr));
+            self.opcode = self.read(self.prog_ctr);
             self.prog_ctr += 1;
 
             // Get starting number of cycles
@@ -109,287 +109,370 @@ struct Instruction {
 
     // Addressing Modes
     // region
-    fn ACC(olc6502: &mut Olc6502) -> u8 { // Accumulator Addressing
-        return 0x0;
+    fn ACC(o: &mut Olc6502) -> u8 { // Accumulator Addressing
+        return 0;
     }
 
-    fn IMM(olc6502: &mut Olc6502) -> u8 { // Immediate
-        return 0x0; 
+    fn IMM(o: &mut Olc6502) -> u8 { // Immediate
+        return 0; 
     }
 
-    fn ABS(olc6502: &mut Olc6502) -> u8 { // Absolute Addressing
-        return 0x0; 
+    fn ABS(o: &mut Olc6502) -> u8 { // Absolute Addressing
+        let lo: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let hi: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        o.addr_abs = (hi << 8) | lo;
+        return 0; 
     }
 
-    fn ZP0(olc6502: &mut Olc6502) -> u8 { // Zero Page Addressing
-        return 0x0; 
+    fn ZP0(o: &mut Olc6502) -> u8 { // Zero Page Addressing
+        o.addr_abs = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+        o.addr_abs &= 0x00FF;
+        return 0;    
     }
 
-    fn ZPX(olc6502: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
-        return 0x0; 
+    fn ZPX(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
+        o.addr_abs = u16::from(o.read(o.prog_ctr) + o.x_reg);
+        o.prog_ctr += 1;
+        o.addr_abs &= 0x00FF;
+        return 0; 
     }
 
-    fn ZPY(olc6502: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing Y
-        return 0x0; 
+    fn ZPY(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing Y
+        o.addr_abs = u16::from(o.read(o.prog_ctr) + o.y_reg);
+        o.prog_ctr += 1;
+        o.addr_abs &= 0x00FF;
+        return 0; 
     }
 
-    fn ABX(olc6502: &mut Olc6502) -> u8 { // Indexed Absolute Adressing X
-        return 0x0; 
+    fn ABX(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing X
+        let lo: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let hi: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        o.addr_abs = (hi << 8) | lo;
+        o.addr_abs += u16::from(o.x_reg);
+
+        if (o.addr_abs & 0xFF00) != (hi << 8) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
-    fn ABY(olc6502: &mut Olc6502) -> u8 { // Indexed Absolute Adressing Y
-        return 0x0; 
+    fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
+        let lo: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let hi: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        o.addr_abs = (hi << 8) | lo;
+        o.addr_abs += u16::from(o.y_reg);
+
+        if (o.addr_abs & 0xFF00) != (hi << 8) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
-    fn IMP(olc6502: &mut Olc6502) -> u8 { // Implied
-        olc6502.fetched_data = olc6502.accumulator;
-        return 0x0; 
+    fn IMP(o: &mut Olc6502) -> u8 { // Implied
+        o.fetched_data = o.accumulator;
+        return 0; 
     }
 
-    fn REL(olc6502: &mut Olc6502) -> u8 { // Relative Adressing
-        return 0x0; 
+    fn REL(o: &mut Olc6502) -> u8 { // Relative Adressing
+        o.addr_rel = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+        if o.addr_rel & 0x80 == 1 {
+            o.addr_rel |= 0xFF00;
+        }
+        return 0;
     }
 
-    fn IZX(olc6502: &mut Olc6502) -> u8 { // Indexed Indirect Addressing X
-        return 0x0; 
+    fn IZX(o: &mut Olc6502) -> u8 { // Indexed Indirect Addressing X
+        let t: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let x: u16 = u16::from(o.x_reg);
+        let lo_addr: u16 = u16::from((t + x) & 0x00FF);
+        let hi_addr: u16 = u16::from((t + x + 1) & 0x00FF);
+        let lo: u16 = u16::from(o.read(lo_addr));
+        let hi: u16 = u16::from(o.read(hi_addr));
+
+        o.addr_abs = (hi << 8) | lo;
+        return 0;
     }
 
-    fn IZY(olc6502: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
-        return 0x0; 
+    fn IZY(o: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
+        let t: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let lo: u16 = u16::from(o.read(t & 0x00FF));
+        let hi: u16 = u16::from(o.read((t + 1) & 0x00FF));
+        
+        o.addr_abs = (hi << 8) | lo;
+        o.addr_abs += u16::from(o.y_reg);
+
+        if (o.addr_abs & 0xFF00) != (hi << 8) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
-    fn IND(olc6502: &mut Olc6502) -> u8 { // Absolute Indirect
-        return 0x0; 
+    fn IND(o: &mut Olc6502) -> u8 { // Absolute Indirect
+        let ptr_lo: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+        let ptr_hi: u16 = u16::from(o.read(o.prog_ctr));
+        o.prog_ctr += 1;
+
+        let ptr: u16 = (ptr_hi << 8) | ptr_lo;
+
+        if ptr_lo == 0x00FF { // Simulate page boundary hardware bug
+            o.addr_abs = (u16::from(o.read(ptr & 0xFF00)) << 8) | u16::from(o.read(ptr + 0));
+        } else {
+            o.addr_abs = (u16::from(o.read(ptr + 1)) << 8) | u16::from(o.read(ptr + 0));
+        }
+
+        return 0;
     }
     // endregion
 
     // Opcodes
     // region
-    fn ADC(olc6502: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
+    fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
         return 0x0; 
     }
 
-    fn AND(olc6502: &mut Olc6502) -> u8 { // "AND" Memory with Accumulator
+    fn AND(o: &mut Olc6502) -> u8 { // "AND" Memory with Accumulator
         return 0x0; 
     }
 
-    fn ASL(olc6502: &mut Olc6502) -> u8 { // Shift Left One Bit (Memory or Accumulator)
+    fn ASL(o: &mut Olc6502) -> u8 { // Shift Left One Bit (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn BCC(olc6502: &mut Olc6502) -> u8 { // Branch on Carry Clear
+    fn BCC(o: &mut Olc6502) -> u8 { // Branch on Carry Clear
         return 0x0; 
     }
 
-    fn BCS(olc6502: &mut Olc6502) -> u8 { // Branch on Carry Set
+    fn BCS(o: &mut Olc6502) -> u8 { // Branch on Carry Set
         return 0x0; 
     }
 
-    fn BEQ(olc6502: &mut Olc6502) -> u8 { // Branch on Result Zero
+    fn BEQ(o: &mut Olc6502) -> u8 { // Branch on Result Zero
         return 0x0; 
     }
 
-    fn BIT(olc6502: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
+    fn BIT(o: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
         return 0x0; 
     }
 
-    fn BMI(olc6502: &mut Olc6502) -> u8 { // Branch on Result Minus
+    fn BMI(o: &mut Olc6502) -> u8 { // Branch on Result Minus
         return 0x0; 
     }
 
-    fn BNE(olc6502: &mut Olc6502) -> u8 { // Branch on Result not Zero
+    fn BNE(o: &mut Olc6502) -> u8 { // Branch on Result not Zero
         return 0x0; 
     }
 
-    fn BPL(olc6502: &mut Olc6502) -> u8 { // Branch on Result Plus
+    fn BPL(o: &mut Olc6502) -> u8 { // Branch on Result Plus
         return 0x0; 
     }
 
-    fn BRK(olc6502: &mut Olc6502) -> u8 { // Force Break
+    fn BRK(o: &mut Olc6502) -> u8 { // Force Break
         return 0x0; 
     }
 
-    fn BVC(olc6502: &mut Olc6502) -> u8 { // Branch on Overflow Clear
+    fn BVC(o: &mut Olc6502) -> u8 { // Branch on Overflow Clear
         return 0x0; 
     }
 
-    fn BVS(olc6502: &mut Olc6502) -> u8 { // Branch on Overflow Set
+    fn BVS(o: &mut Olc6502) -> u8 { // Branch on Overflow Set
         return 0x0; 
     }
 
-    fn CLC(olc6502: &mut Olc6502) -> u8 { // Clear Carry Flag
+    fn CLC(o: &mut Olc6502) -> u8 { // Clear Carry Flag
         return 0x0; 
     }
 
-    fn CLD(olc6502: &mut Olc6502) -> u8 { // Clear Decimal Mode
+    fn CLD(o: &mut Olc6502) -> u8 { // Clear Decimal Mode
         return 0x0; 
     }
 
-    fn CLI(olc6502: &mut Olc6502) -> u8 { // Clear Interrupt Disable Bit
+    fn CLI(o: &mut Olc6502) -> u8 { // Clear Interrupt Disable Bit
         return 0x0; 
     }
 
-    fn CLV(olc6502: &mut Olc6502) -> u8 { // Clear Overflow Flag
+    fn CLV(o: &mut Olc6502) -> u8 { // Clear Overflow Flag
         return 0x0; 
     }
 
-    fn CMP(olc6502: &mut Olc6502) -> u8 { // Compare Memory And Accumulator
+    fn CMP(o: &mut Olc6502) -> u8 { // Compare Memory And Accumulator
         return 0x0; 
     }
 
-    fn CPX(olc6502: &mut Olc6502) -> u8 { // Compare Memory and Index X
+    fn CPX(o: &mut Olc6502) -> u8 { // Compare Memory and Index X
         return 0x0; 
     }
 
-    fn CPY(olc6502: &mut Olc6502) -> u8 { // Compare Memory And Index Y
+    fn CPY(o: &mut Olc6502) -> u8 { // Compare Memory And Index Y
         return 0x0; 
     }
 
-    fn DEC(olc6502: &mut Olc6502) -> u8 { // Decrement Memory by One
+    fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
         return 0x0; 
     }
 
-    fn DEX(olc6502: &mut Olc6502) -> u8 { // Decrement Index X by One
+    fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
         return 0x0; 
     }
 
-    fn DEY(olc6502: &mut Olc6502) -> u8 { // Decrement Index Y by One
+    fn DEY(o: &mut Olc6502) -> u8 { // Decrement Index Y by One
         return 0x0; 
     }
 
-    fn EOR(olc6502: &mut Olc6502) -> u8 { // "Exclusive-OR" Memory with Accumulator
+    fn EOR(o: &mut Olc6502) -> u8 { // "Exclusive-OR" Memory with Accumulator
         return 0x0; 
     }
 
-    fn INC(olc6502: &mut Olc6502) -> u8 { // Increment Memory by One
+    fn INC(o: &mut Olc6502) -> u8 { // Increment Memory by One
         return 0x0; 
     }
 
-    fn INX(olc6502: &mut Olc6502) -> u8 { // Increment Index X by One
+    fn INX(o: &mut Olc6502) -> u8 { // Increment Index X by One
         return 0x0; 
     }
 
-    fn INY(olc6502: &mut Olc6502) -> u8 { // Increment Index Y by One
+    fn INY(o: &mut Olc6502) -> u8 { // Increment Index Y by One
         return 0x0; 
     }
 
-    fn JMP(olc6502: &mut Olc6502) -> u8 { // Jump to New Location
+    fn JMP(o: &mut Olc6502) -> u8 { // Jump to New Location
         return 0x0; 
     }
 
-    fn JSR(olc6502: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
+    fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
         return 0x0; 
     }
 
-    fn LDA(olc6502: &mut Olc6502) -> u8 { // Load Accumulator with Memory
+    fn LDA(o: &mut Olc6502) -> u8 { // Load Accumulator with Memory
         return 0x0; 
     }
 
-    fn LDX(olc6502: &mut Olc6502) -> u8 { // Load Index X with Memory
+    fn LDX(o: &mut Olc6502) -> u8 { // Load Index X with Memory
         return 0x0; 
     }
 
-    fn LDY(olc6502: &mut Olc6502) -> u8 { // Load Index Y with Memory
+    fn LDY(o: &mut Olc6502) -> u8 { // Load Index Y with Memory
         return 0x0; 
     }
 
-    fn LSR(olc6502: &mut Olc6502) -> u8 { // Shift One Bit Right (Memory or Accumulator)
+    fn LSR(o: &mut Olc6502) -> u8 { // Shift One Bit Right (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn NOP(olc6502: &mut Olc6502) -> u8 { // No Operation
+    fn NOP(o: &mut Olc6502) -> u8 { // No Operation
         return 0x0; 
     }
 
-    fn ORA(olc6502: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
+    fn ORA(o: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
         return 0x0; 
     }
 
-    fn PHA(olc6502: &mut Olc6502) -> u8 { // Push Accumulator on Stack
+    fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
         return 0x0; 
     }
 
-    fn PHP(olc6502: &mut Olc6502) -> u8 { // Push Processor Status on Stack
+    fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
         return 0x0; 
     }
 
-    fn PLA(olc6502: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
+    fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
         return 0x0; 
     }
 
-    fn PLP(olc6502: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
+    fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
         return 0x0; 
     }
 
-    fn ROL(olc6502: &mut Olc6502) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
+    fn ROL(o: &mut Olc6502) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn ROR(olc6502: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
+    fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
         return 0x0; 
     }
 
-    fn RTI(olc6502: &mut Olc6502) -> u8 { // Return from Interrupt
+    fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
         return 0x0; 
     }
 
-    fn RTS(olc6502: &mut Olc6502) -> u8 { // Return from Subroutine
+    fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
         return 0x0; 
     }
 
-    fn SBC(olc6502: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
+    fn SBC(o: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
         return 0x0; 
     }
 
-    fn SEC(olc6502: &mut Olc6502) -> u8 { // Set Carry Flag
+    fn SEC(o: &mut Olc6502) -> u8 { // Set Carry Flag
         return 0x0; 
     }
 
-    fn SED(olc6502: &mut Olc6502) -> u8 { // Set Decimal Mode (unused)
+    fn SED(o: &mut Olc6502) -> u8 { // Set Decimal Mode (unused)
         return 0x0; 
     }
 
-    fn SEI(olc6502: &mut Olc6502) -> u8 { // Set Interrupt Disable Status
+    fn SEI(o: &mut Olc6502) -> u8 { // Set Interrupt Disable Status
         return 0x0; 
     }
 
-    fn STA(olc6502: &mut Olc6502) -> u8 { // Store Accumulator in Memory
+    fn STA(o: &mut Olc6502) -> u8 { // Store Accumulator in Memory
         return 0x0; 
     }
 
-    fn STX(olc6502: &mut Olc6502) -> u8 { // Store Index X in Memory
+    fn STX(o: &mut Olc6502) -> u8 { // Store Index X in Memory
         return 0x0; 
     }
 
-    fn STY(olc6502: &mut Olc6502) -> u8 { // Store Index Y in Memory
+    fn STY(o: &mut Olc6502) -> u8 { // Store Index Y in Memory
         return 0x0; 
     }
 
-    fn TAX(olc6502: &mut Olc6502) -> u8 { // Transfer Accumulator to Index X
+    fn TAX(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index X
         return 0x0; 
     }
 
-    fn TAY(olc6502: &mut Olc6502) -> u8 { // Transfer Accumulator to Index Y
+    fn TAY(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index Y
         return 0x0; 
     }
 
-    fn TSX(olc6502: &mut Olc6502) -> u8 { // Transfer Stack Pointer to Index X
+    fn TSX(o: &mut Olc6502) -> u8 { // Transfer Stack Pointer to Index X
         return 0x0; 
     }
 
-    fn TXA(olc6502: &mut Olc6502) -> u8 { // Transfer Index X to Accumulator
+    fn TXA(o: &mut Olc6502) -> u8 { // Transfer Index X to Accumulator
         return 0x0; 
     }
 
-    fn TXS(olc6502: &mut Olc6502) -> u8 { // Transfer Index X to Stack Register
+    fn TXS(o: &mut Olc6502) -> u8 { // Transfer Index X to Stack Register
         return 0x0; 
     }
 
-    fn TYA(olc6502: &mut Olc6502) -> u8 { // Transfer Index Y to Accumulator
+    fn TYA(o: &mut Olc6502) -> u8 { // Transfer Index Y to Accumulator
         return 0x0; 
     }
 
-    fn XXX(olc6502: &mut Olc6502) -> u8 { // Undefined Instruction
+    fn XXX(o: &mut Olc6502) -> u8 { // Undefined Instruction
         return 0x0; 
     }
     // endregion
