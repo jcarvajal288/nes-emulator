@@ -34,9 +34,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn write() {
+    fn test_write() {
         let mut b: Bus = create_bus();
         b.write(0x24, 0x20);
         assert!(b.ram[0x24] == 0x20);
+    }
+
+    #[test]
+    fn test_read() {
+        let mut b: Bus = create_bus();
+        b.ram[0x24] = 0x20;
+        assert!(b.read(0x24) == 0x20);
     }
 }
