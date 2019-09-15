@@ -600,5 +600,16 @@ mod tests {
         IZX(&mut o);
         assert!(o.addr_abs == 0x2074);
     }
+
+    #[test]
+    fn zero_page_x_indexed_wrapped() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0xFF;
+        o.prog_ctr = 0x10;
+        o.bus.write(0xFF, 0x74);
+        o.bus.write(0x00, 0x20);
+        IZX(&mut o);
+        assert!(o.addr_abs == 0x2074);
+    }
     // endregion
 }
