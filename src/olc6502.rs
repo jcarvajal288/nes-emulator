@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::bus;
 
 enum Flags6502 {
@@ -77,7 +78,7 @@ impl Olc6502 {
 
     //fn get_flag(flag: Flags6502) -> u8 { }
 
-    fn set_flag(flag: Flags6502, v: bool) {
+    fn set_flag(_flag: Flags6502, _v: bool) {
 
     }
 
@@ -248,7 +249,7 @@ fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
 }
 
 #[allow(non_snake_case)]
-fn IMP(o: &mut Olc6502) -> u8 { // Implied
+fn IMP(_: &mut Olc6502) -> u8 { // Implied
     return 0; 
 }
 

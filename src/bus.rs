@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //use super::olc6502;
 
 pub struct Bus {
@@ -23,7 +24,7 @@ impl Bus {
     }
 
     pub fn read(&self, addr: u16) -> u8 {
-        let read_only: bool = false; // this will be a parameter in the future
+        let _read_only: bool = false; // this will be a parameter in the future
 
         return self.ram[usize::from(addr)];
     }
