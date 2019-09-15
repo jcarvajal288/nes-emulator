@@ -110,10 +110,12 @@ struct Instruction {
     // Addressing Modes
     // region
     fn ACC(o: &mut Olc6502) -> u8 { // Accumulator Addressing
+        o.fetched_data = o.accumulator;
         return 0;
     }
 
     fn IMM(o: &mut Olc6502) -> u8 { // Immediate
+        o.addr_abs = o.prog_ctr & 0x00FF;
         return 0; 
     }
 
@@ -184,7 +186,6 @@ struct Instruction {
     }
 
     fn IMP(o: &mut Olc6502) -> u8 { // Implied
-        o.fetched_data = o.accumulator;
         return 0; 
     }
 
