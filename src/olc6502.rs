@@ -76,17 +76,23 @@ impl Olc6502 {
         self.bus.write(addr, data);
     }
 
-    //fn get_flag(flag: Flags6502) -> u8 { }
-
-        /*
-    fn set_flag(mut self, flag: Flags6502, v: bool) {
-        if v == true {
-            self.status_reg |= flag;
+    fn get_flag(&self, flag: Flags6502) -> u8 { 
+        let f = flag as u8;
+        if (self.status_reg & f) > 0 {
+            return 1;
         } else {
-            self.status_reg &= !flag;
+            return 0;
         }
     }
-        */
+
+    fn set_flag(&mut self, flag: Flags6502, v: bool) {
+        let f = flag as u8;
+        if v == true {
+            self.status_reg |= f;
+        } else {
+            self.status_reg &= !f;
+        }
+    }
 
     fn clock(mut self) {
         if self.cycles == 0 {
@@ -622,6 +628,49 @@ fn XXX(o: &mut Olc6502) -> u8 { // Undefined Instruction
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_status_reg_read() {
+        let mut o: Olc6502 = create_olc6502();
+        o.status_reg = 0x55;
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::I) == 1);
+        assert!(o.get_flag(Flags6502::D) == 0);
+        assert!(o.get_flag(Flags6502::B) == 1);
+        assert!(o.get_flag(Flags6502::U) == 0);
+        assert!(o.get_flag(Flags6502::V) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    fn test_status_reg_write() {
+        let mut o: Olc6502 = create_olc6502();
+        o.status_reg = 0x00;
+        o.set_flag(Flags6502::C, true);
+        assert!(o.get_flag(Flags6502::C) == 1);
+
+        o.set_flag(Flags6502::Z, true);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+
+        o.set_flag(Flags6502::I, true);
+        assert!(o.get_flag(Flags6502::I) == 1);
+
+        o.set_flag(Flags6502::D, true);
+        assert!(o.get_flag(Flags6502::D) == 1);
+
+        o.set_flag(Flags6502::B, true);
+        assert!(o.get_flag(Flags6502::B) == 1);
+
+        o.set_flag(Flags6502::U, true);
+        assert!(o.get_flag(Flags6502::U) == 1);
+
+        o.set_flag(Flags6502::V, true);
+        assert!(o.get_flag(Flags6502::V) == 1);
+
+        o.set_flag(Flags6502::N, true);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
 
     // addressing mode tests
     // region
