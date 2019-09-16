@@ -273,6 +273,7 @@ fn REL(o: &mut Olc6502) -> u8 { // Relative Addressing
     */
     let offset: u8 = o.read(o.prog_ctr);
     o.addr_abs = o.prog_ctr + u16::from(offset);
+    o.addr_abs &= 0x00FF;
     o.prog_ctr += 1;
     return 0;
 }
@@ -653,7 +654,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn am_REL_positive_no_wrap() {
+    fn am_REL_positive() {
         let mut o: Olc6502 = create_olc6502();
         let offset: u8 = 0x20;
         let current_addr: u16 = 0x24;
@@ -661,6 +662,19 @@ mod tests {
         o.bus.write(current_addr, offset);
         REL(&mut o);
         let new_addr: u16 = current_addr + u16::from(offset);
+        assert!(o.addr_abs == new_addr);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_REL_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        let offset: u8 = 0xE0; // -0x20
+        let current_addr: u16 = 0x24;
+        o.prog_ctr = current_addr;
+        o.bus.write(current_addr, offset);
+        REL(&mut o);
+        let new_addr: u16 = 0x04;
         assert!(o.addr_abs == new_addr);
     }
 
