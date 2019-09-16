@@ -674,8 +674,7 @@ mod tests {
         o.prog_ctr = current_addr;
         o.bus.write(current_addr, offset);
         REL(&mut o);
-        let new_addr: u16 = 0x04;
-        assert!(o.addr_abs == new_addr);
+        assert!(o.addr_abs == 0x04);
     }
 
     #[test]
@@ -688,6 +687,30 @@ mod tests {
         o.prog_ctr = current_addr;
         ABS(&mut o);
         assert!(o.addr_abs == 0x4032);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_ZP0() {
+        let mut o: Olc6502 = create_olc6502();
+        let current_addr: u16 = 0x1000;
+        o.bus.write(current_addr, 0x32);
+        o.prog_ctr = current_addr;
+        ZP0(&mut o);
+        assert!(o.addr_abs == 0x32);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_IND() {
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.write(0x24, 0x00);
+        o.bus.write(0x25, 0x10);
+        o.bus.write(0x1000, 0x52);
+        o.bus.write(0x1001, 0x3A);
+        o.prog_ctr = 0x24;
+        IND(&mut o);
+        assert!(o.addr_abs == 0x3A52);
     }
 
     #[test]
