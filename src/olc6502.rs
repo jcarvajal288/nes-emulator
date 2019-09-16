@@ -680,6 +680,18 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
+    fn am_ABS() {
+        let mut o: Olc6502 = create_olc6502();
+        let current_addr: u16 = 0x1000;
+        o.bus.write(current_addr, 0x32);
+        o.bus.write(current_addr+1, 0x40);
+        o.prog_ctr = current_addr;
+        ABS(&mut o);
+        assert!(o.addr_abs == 0x4032);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
     fn am_IZX_normal() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x24;
