@@ -775,5 +775,18 @@ mod tests {
         IZX(&mut o);
         assert!(o.addr_abs == 0x2074);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_IZY() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x10;
+        o.prog_ctr = 0x24;
+        o.bus.write(0x24, 0x86);
+        o.bus.write(0x86, 0x28);
+        o.bus.write(0x87, 0x40);
+        IZY(&mut o);
+        assert!(o.addr_abs == 0x4038);
+    }
     // endregion
 }
