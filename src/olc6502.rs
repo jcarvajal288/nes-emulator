@@ -715,6 +715,20 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
+    fn am_IND_FF_page_bug() {
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.write(0x24, 0xFF);
+        o.bus.write(0x25, 0x10);
+        o.bus.write(0x1000, 0xAA);
+        o.bus.write(0x10FF, 0x3A);
+        o.bus.write(0x1100, 0xEE);
+        o.prog_ctr = 0x24;
+        IND(&mut o);
+        assert!(o.addr_abs == 0xAA3A);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
     fn am_IZX_normal() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x24;
