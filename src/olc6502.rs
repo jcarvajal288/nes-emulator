@@ -472,7 +472,8 @@ fn CLI(o: &mut Olc6502) -> u8 { // Clear Interrupt Disable Bit
 
 #[allow(non_snake_case)]
 fn CLV(o: &mut Olc6502) -> u8 { // Clear Overflow Flag
-    return 0x0; 
+    o.set_flag(Flags6502::V, false);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
@@ -1314,6 +1315,15 @@ mod tests {
         o.set_flag(Flags6502::I, true);
         CLI(&mut o);
         assert!(o.get_flag(Flags6502::I) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CLV() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::V, true);
+        CLV(&mut o);
+        assert!(o.get_flag(Flags6502::V) == 0);
     }
     // endregion
 }
