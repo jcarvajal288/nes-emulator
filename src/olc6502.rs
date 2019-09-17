@@ -414,7 +414,10 @@ fn BMI(o: &mut Olc6502) -> u8 { // Branch on Result Minus
 
 #[allow(non_snake_case)]
 fn BNE(o: &mut Olc6502) -> u8 { // Branch on Result not Zero
-    return 0x0; 
+    if o.get_flag(Flags6502::Z) == 0 {
+        perform_jump(o);
+    }
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1042,6 +1045,51 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, true);
         BEQ(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 2); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BNE_zero_set() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 50;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, true);
+        BNE(&mut o);
+        assert!(o.prog_ctr == addr); // no jump
+        assert!(o.cycles == current_cycles); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BNE_short_jump() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, false);
+        BNE(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 1); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BNE_jump_page() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F00;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, false);
+        BNE(&mut o);
         assert!(o.prog_ctr == o.addr_abs);
         assert!(o.cycles == current_cycles + 2); 
     }
