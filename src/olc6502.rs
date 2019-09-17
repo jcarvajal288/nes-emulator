@@ -117,7 +117,20 @@ impl Olc6502 {
     // fn irq() {}
     // fn nmi() {}
 
-    // fn fetch -> u8 {}
+     fn fetch(&mut self) -> u8 {
+         let i: usize = usize::from(self.opcode);
+         // cast function pointers to usize to compare
+         let addrmode: usize = self.lookup[i].addrmode as usize;
+         let imp: usize = IMP as usize;
+         let acc: usize = ACC as usize;
+         if addrmode == acc {
+             self.fetched_data = self.accumulator;
+         }
+         else if !(addrmode == imp) {
+             self.fetched_data = self.read(self.addr_abs);
+         }
+         return self.fetched_data
+     }
 }
 
 fn create_olc6502() -> Olc6502 {
@@ -345,7 +358,11 @@ fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
 
 #[allow(non_snake_case)]
 fn AND(o: &mut Olc6502) -> u8 { // "AND" Memory with Accumulator
-    return 0x0; 
+    let data: u8 = o.fetch();
+    o.accumulator &= data;
+    o.set_flag(Flags6502::Z, o.accumulator == 0x00);
+    o.set_flag(Flags6502::N, o.accumulator & 0x80 >= 1);
+    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -360,7 +377,14 @@ fn BCC(o: &mut Olc6502) -> u8 { // Branch on Carry Clear
 
 #[allow(non_snake_case)]
 fn BCS(o: &mut Olc6502) -> u8 { // Branch on Carry Set
-    return 0x0; 
+    return 0x0;
+/*
+    if o.get_flag(Flags6502::C) == 1 {
+        o.cycles += 1;
+
+        if (o.addr_abs & 0xFF00) != 
+    }
+    */
 }
 
 #[allow(non_snake_case)]
@@ -836,6 +860,45 @@ mod tests {
         o.bus.write(0x87, 0x40);
         IZY(&mut o);
         assert!(o.addr_abs == 0x4038);
+    }
+    // endregion
+
+    // Instruction tests
+    // region
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_AND() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF9;
+        o.fetched_data = 0x45;
+        AND(&mut o);
+        assert!(o.accumulator == 0x41);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADD_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xFF;
+        o.fetched_data = 0x00;
+        AND(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADD_negative_result() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xFF;
+        o.fetched_data = 0xF0;
+        AND(&mut o);
+        assert!(o.accumulator == 0xF0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
     // endregion
 }
