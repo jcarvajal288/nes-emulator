@@ -396,7 +396,10 @@ fn BCS(o: &mut Olc6502) -> u8 { // Branch on Carry Set
 
 #[allow(non_snake_case)]
 fn BEQ(o: &mut Olc6502) -> u8 { // Branch on Result Zero
-    return 0x0; 
+    if o.get_flag(Flags6502::Z) == 1 {
+        perform_jump(o);
+    }
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -955,7 +958,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_BCC_carry_unset() {
+    fn op_BCC_carry_set() {
         let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
@@ -994,6 +997,51 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, false);
         BCC(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 2); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BEQ_zero_unset() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 50;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, false);
+        BEQ(&mut o);
+        assert!(o.prog_ctr == addr); // no jump
+        assert!(o.cycles == current_cycles); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BEQ_short_jump() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, true);
+        BEQ(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 1); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BEQ_jump_page() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F00;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, true);
+        BEQ(&mut o);
         assert!(o.prog_ctr == o.addr_abs);
         assert!(o.cycles == current_cycles + 2); 
     }
