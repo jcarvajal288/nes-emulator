@@ -840,7 +840,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn IZX_wrapped() {
+    fn am_IZX_wrapped() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xFF;
         o.prog_ctr = 0x10;
