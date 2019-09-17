@@ -454,7 +454,8 @@ fn BVS(o: &mut Olc6502) -> u8 { // Branch on Overflow Set
 
 #[allow(non_snake_case)]
 fn CLC(o: &mut Olc6502) -> u8 { // Clear Carry Flag
-    return 0x0; 
+    o.set_flag(Flags6502::C, false);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
@@ -1284,6 +1285,15 @@ mod tests {
         BVS(&mut o);
         assert!(o.prog_ctr == o.addr_abs);
         assert!(o.cycles == current_cycles + 2); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CLC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::C, true);
+        CLC(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 0);
     }
     // endregion
 }
