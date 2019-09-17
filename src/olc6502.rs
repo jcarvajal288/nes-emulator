@@ -409,7 +409,10 @@ fn BIT(o: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
 
 #[allow(non_snake_case)]
 fn BMI(o: &mut Olc6502) -> u8 { // Branch on Result Minus
-    return 0x0; 
+    if o.get_flag(Flags6502::N) == 1 {
+        perform_jump(o);
+    }
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1090,6 +1093,51 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, false);
         BNE(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 2); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BMI_negative_unset() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 50;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::N, false);
+        BMI(&mut o);
+        assert!(o.prog_ctr == addr); // no jump
+        assert!(o.cycles == current_cycles); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BMI_short_jump() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::N, true);
+        BMI(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 1); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BMI_jump_page() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F00;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::N, true);
+        BMI(&mut o);
         assert!(o.prog_ctr == o.addr_abs);
         assert!(o.cycles == current_cycles + 2); 
     }
