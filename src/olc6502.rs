@@ -377,14 +377,15 @@ fn BCC(o: &mut Olc6502) -> u8 { // Branch on Carry Clear
 
 #[allow(non_snake_case)]
 fn BCS(o: &mut Olc6502) -> u8 { // Branch on Carry Set
-    return 0x0;
-/*
     if o.get_flag(Flags6502::C) == 1 {
         o.cycles += 1;
 
-        if (o.addr_abs & 0xFF00) != 
+        if (o.addr_abs & 0xFF00) != (o.prog_ctr & 0xFF00) {
+            o.cycles += 1;
+        }
+        o.prog_ctr = o.addr_abs;
     }
-    */
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -899,6 +900,51 @@ mod tests {
         assert!(o.accumulator == 0xF0);
         assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BCS_carry_unset() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 50;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::C, false);
+        BCS(&mut o);
+        assert!(o.prog_ctr == addr); // no jump
+        assert!(o.cycles == current_cycles); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BCS_short_jump() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::C, true);
+        BCS(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 1); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BCS_jump_page() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x1000;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + 0x0F00;
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::C, true);
+        BCS(&mut o);
+        assert!(o.prog_ctr == o.addr_abs);
+        assert!(o.cycles == current_cycles + 2); 
     }
     // endregion
 }
