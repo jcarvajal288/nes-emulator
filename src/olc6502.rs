@@ -466,7 +466,8 @@ fn CLD(o: &mut Olc6502) -> u8 { // Clear Decimal Mode
 
 #[allow(non_snake_case)]
 fn CLI(o: &mut Olc6502) -> u8 { // Clear Interrupt Disable Bit
-    return 0x0; 
+    o.set_flag(Flags6502::I, false);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
@@ -1304,6 +1305,15 @@ mod tests {
         o.set_flag(Flags6502::D, true);
         CLD(&mut o);
         assert!(o.get_flag(Flags6502::D) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CLI() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::I, true);
+        CLI(&mut o);
+        assert!(o.get_flag(Flags6502::I) == 0);
     }
     // endregion
 }
