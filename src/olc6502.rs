@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use super::bus;
 
+static STACK_BASE: u16 = 0x0100;
+
 enum Flags6502 {
     C = (1 << 0), // Carry Bit
     Z = (1 << 1), // Zero
@@ -50,22 +52,25 @@ impl PartialEq for Olc6502 {
 
 
 impl Olc6502 {
-    #[allow(non_snake_case)]
-    fn reset(mut self) {
+    fn reset(&mut self) {
+        // set program counter to known location
+        self.addr_abs = 0xFFFC;
+        let lo: u16 = self.bus.read(self.addr_abs) as u16;
+        let hi: u16 = self.bus.read(self.addr_abs + 1) as u16;
+
         self.accumulator = 0;
         self.x_reg = 0;
         self.y_reg = 0;
-        self.stack_ptr = 0;
-        self.prog_ctr = 0;
+        self.stack_ptr = 0xFF;
+        self.prog_ctr = (hi << 8) | lo;
         self.status_reg = 0;
 
         self.fetched_data = 0;
         self.addr_abs = 0;
         self.addr_rel = 0;
         self.opcode = 0;
-        self.cycles = 0;
+        self.cycles = 8; // reset takes time
         self.lookup = populate_lookup_table();
-        self.bus.reset_ram();
     }
 
     fn read(&self, addr: u16) -> u8 {
@@ -113,7 +118,6 @@ impl Olc6502 {
 
         self.cycles -= 1;
     }
-    // fn reset() {}
     // fn irq() {}
     // fn nmi() {}
 
@@ -134,7 +138,7 @@ impl Olc6502 {
 }
 
 fn create_olc6502() -> Olc6502 {
-    let o = Olc6502 {
+    let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
         y_reg: 0,
@@ -149,6 +153,7 @@ fn create_olc6502() -> Olc6502 {
         cycles: 0,
         lookup: populate_lookup_table(),
     };
+    o.reset();
     return o;
 }
 
@@ -581,7 +586,10 @@ fn ORA(o: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
 
 #[allow(non_snake_case)]
 fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
-    return 0x0; 
+    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
+    o.bus.write(current_stack_location, o.accumulator);
+    o.stack_ptr -= 1;
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1482,6 +1490,18 @@ mod tests {
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PHA() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        let old_stack_ptr = o.stack_ptr;
+        o.accumulator = 0x14;
+        PHA(&mut o);
+        assert!(o.bus.read(stack_end) == 0x14);
+        assert!(o.stack_ptr == old_stack_ptr - 1);
     }
     // endregion
 //endregion
