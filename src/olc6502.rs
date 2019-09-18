@@ -353,7 +353,17 @@ fn IND(o: &mut Olc6502) -> u8 { // Absolute Indirect
 // region
 #[allow(non_snake_case)]
 fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
-    return 0x0; 
+    let data: u8 = o.fetch();
+    let a: u16 = o.accumulator as u16;
+    let data16: u16 = data as u16;
+    let flagC: u16 = o.get_flag(Flags6502::C) as u16;
+    let sum: u16 = a + data16 + flagC;
+    o.set_flag(Flags6502::C, sum > 0xFF);
+    o.set_flag(Flags6502::Z, (sum & 0x00FF) == 0);
+    o.set_flag(Flags6502::N, (sum & 0x80) > 0);
+    o.set_flag(Flags6502::V, ((!(a ^ data16) & (a ^ sum)) & 0x0080) > 0);
+    o.accumulator = (sum & 0x00FF) as u8;
+    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -678,6 +688,8 @@ fn XXX(o: &mut Olc6502) -> u8 { // Undefined Instruction
 // endregion
 
 
+// Tests
+// region
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1325,5 +1337,20 @@ mod tests {
         CLV(&mut o);
         assert!(o.get_flag(Flags6502::V) == 0);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_pos_pos() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x04;
+        o.fetched_data = 0x14;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x18);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
     // endregion
+//endregion
 }
