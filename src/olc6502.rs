@@ -1438,6 +1438,20 @@ mod tests {
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_neg_neg_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF6;
+        o.fetched_data = 0xF6;
+        ADC(&mut o);
+        assert!(o.accumulator == 0xEC);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
     // endregion
 //endregion
 }
