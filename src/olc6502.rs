@@ -361,6 +361,9 @@ fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
     o.set_flag(Flags6502::C, sum > 0xFF);
     o.set_flag(Flags6502::Z, (sum & 0x00FF) == 0);
     o.set_flag(Flags6502::N, (sum & 0x80) > 0);
+    //let A: bool = a & 0x80 > 0;
+    //let R: bool = sum & 0x80 > 0;
+    //let M: bool = data & 0x80 > 0;
     o.set_flag(Flags6502::V, ((!(a ^ data16) & (a ^ sum)) & 0x0080) > 0);
     o.accumulator = (sum & 0x00FF) as u8;
     return 1;
@@ -1348,6 +1351,20 @@ mod tests {
         assert!(o.accumulator == 0x18);
         assert!(o.get_flag(Flags6502::V) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_pos_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x78;
+        o.fetched_data = 0x78;
+        ADC(&mut o);
+        assert!(o.accumulator == 0xF0);
+        assert!(o.get_flag(Flags6502::V) == 1);
+        assert!(o.get_flag(Flags6502::N) == 1);
         assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
     }
