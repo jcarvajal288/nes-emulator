@@ -354,19 +354,19 @@ fn IND(o: &mut Olc6502) -> u8 { // Absolute Indirect
 #[allow(non_snake_case)]
 fn ADC(o: &mut Olc6502) -> u8 { // Add Memory to Accumulator with Carry
     let data: u8 = o.fetch();
+    add(o, data as u16);
+    return 1;
+}
+
+fn add(o: &mut Olc6502, data16: u16) {
     let a: u16 = o.accumulator as u16;
-    let data16: u16 = data as u16;
-    let flagC: u16 = o.get_flag(Flags6502::C) as u16;
-    let sum: u16 = a + data16 + flagC;
+    let flag_c: u16 = o.get_flag(Flags6502::C) as u16;
+    let sum: u16 = a + data16 + flag_c;
     o.set_flag(Flags6502::C, sum > 0xFF);
     o.set_flag(Flags6502::Z, (sum & 0x00FF) == 0);
     o.set_flag(Flags6502::N, (sum & 0x80) > 0);
-    //let A: bool = a & 0x80 > 0;
-    //let R: bool = sum & 0x80 > 0;
-    //let M: bool = data & 0x80 > 0;
     o.set_flag(Flags6502::V, ((!(a ^ data16) & (a ^ sum)) & 0x0080) > 0);
     o.accumulator = (sum & 0x00FF) as u8;
-    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -621,7 +621,10 @@ fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
 
 #[allow(non_snake_case)]
 fn SBC(o: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
-    return 0x0; 
+    let data: u8 = o.fetch();
+    let inverted_data: u16 = ((data as u16) ^ 0x00FF) + 1;
+    add(o, inverted_data); // make the data negative and add it
+    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -1465,6 +1468,20 @@ mod tests {
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SBC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x14;
+        o.fetched_data = 0x04;
+        SBC(&mut o);
+        assert!(o.accumulator == 0x10);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
     }
     // endregion
 //endregion
