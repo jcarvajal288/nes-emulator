@@ -124,12 +124,9 @@ impl Olc6502 {
     }
 
     fn run_interrupt(&mut self, inter_addr: u16, cycles: u8) {
-        self.bus.write(self.stack_top(), (self.prog_ctr >> 8) as u8);
-        self.stack_ptr -= 1;
-        self.bus.write(self.stack_top(), self.prog_ctr as u8);
-        self.stack_ptr -= 1;
-        self.bus.write(self.stack_top(), self.status_reg);
-        self.stack_ptr -= 1;
+        self.push_to_stack((self.prog_ctr >> 8) as u8);
+        self.push_to_stack(self.prog_ctr as u8);
+        self.push_to_stack(self.status_reg);
 
         self.set_flag(Flags6502::B, false);
         self.set_flag(Flags6502::U, true);
