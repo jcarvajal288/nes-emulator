@@ -118,8 +118,40 @@ impl Olc6502 {
 
         self.cycles -= 1;
     }
-    // fn irq() {}
-    // fn nmi() {}
+
+    fn stack_top(&self) -> u16 {
+        return STACK_BASE | self.stack_ptr as u16;
+    }
+
+    fn run_interrupt(&mut self, inter_addr: u16, cycles: u8) {
+        self.bus.write(self.stack_top(), (self.prog_ctr >> 8) as u8);
+        self.stack_ptr -= 1;
+        self.bus.write(self.stack_top(), self.prog_ctr as u8);
+        self.stack_ptr -= 1;
+        self.bus.write(self.stack_top(), self.status_reg);
+        self.stack_ptr -= 1;
+
+        self.set_flag(Flags6502::B, false);
+        self.set_flag(Flags6502::U, true);
+        self.set_flag(Flags6502::I, true);
+
+        self.addr_abs = inter_addr; // hardcoded interrupt address
+        let lo = self.bus.read(self.addr_abs) as u16;
+        let hi = self.bus.read(self.addr_abs + 1) as u16;
+        self.prog_ctr = (hi << 8) | lo;
+
+        self.cycles = cycles;
+    }
+
+    fn irq(&mut self) {
+        if self.get_flag(Flags6502::I) == 0 {
+            self.run_interrupt(0xFFFE, 7);
+        }
+     }
+
+    fn nmi(&mut self) {
+        self.run_interrupt(0xFFFA, 8);
+    }
 
      fn fetch(&mut self) -> u8 {
          let i: usize = usize::from(self.opcode);
@@ -758,6 +790,23 @@ mod tests {
 
         o.set_flag(Flags6502::N, true);
         assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    fn test_irq() {
+        let mut o: Olc6502 = create_olc6502();
+        o.prog_ctr = 0x11EC;
+        o.status_reg = 0x28;
+        o.bus.write(0xFFFE, 0xAD);
+        o.bus.write(0xFFFF, 0xDE);
+        o.irq();
+        assert!(o.bus.read(0x01FF) == 0x11);
+        assert!(o.bus.read(0x01FE) == 0xEC);
+        assert!(o.bus.read(0x01FD) == 0x28);
+        assert!(o.prog_ctr == 0xDEAD);
+        assert!(o.get_flag(Flags6502::I) == 1);
+        assert!(o.get_flag(Flags6502::B) == 0);
+        assert!(o.get_flag(Flags6502::U) == 1);
     }
 
     // addressing mode tests
