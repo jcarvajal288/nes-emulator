@@ -153,20 +153,32 @@ impl Olc6502 {
         self.run_interrupt(0xFFFA, 8);
     }
 
-     fn fetch(&mut self) -> u8 {
-         let i: usize = usize::from(self.opcode);
-         // cast function pointers to usize to compare
-         let addrmode: usize = self.lookup[i].addrmode as usize;
-         let imp: usize = IMP as usize;
-         let acc: usize = ACC as usize;
-         if addrmode == acc {
-             self.fetched_data = self.accumulator;
-         }
-         else if !(addrmode == imp) {
-             self.fetched_data = self.read(self.addr_abs);
-         }
-         return self.fetched_data
-     }
+    fn push_to_stack(&mut self, data: u8) {
+        let current_stack_location = STACK_BASE | self.stack_ptr as u16;
+        self.bus.write(current_stack_location, data);
+        self.stack_ptr -= 1;
+    }
+
+    fn pop_from_stack(&mut self) -> u8 {
+        self.stack_ptr += 1;
+        let current_stack_location = STACK_BASE | self.stack_ptr as u16;
+        return self.bus.read(current_stack_location);
+    }
+
+    fn fetch(&mut self) -> u8 {
+        let i: usize = usize::from(self.opcode);
+        // cast function pointers to usize to compare
+        let addrmode: usize = self.lookup[i].addrmode as usize;
+        let imp: usize = IMP as usize;
+        let acc: usize = ACC as usize;
+        if addrmode == acc {
+            self.fetched_data = self.accumulator;
+        }
+        else if !(addrmode == imp) {
+            self.fetched_data = self.read(self.addr_abs);
+        }
+        return self.fetched_data
+    }
 }
 
 fn create_olc6502() -> Olc6502 {
@@ -618,33 +630,25 @@ fn ORA(o: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
 
 #[allow(non_snake_case)]
 fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
-    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
-    o.bus.write(current_stack_location, o.accumulator);
-    o.stack_ptr -= 1;
+    o.push_to_stack(o.accumulator);
     return 0;
 }
 
 #[allow(non_snake_case)]
 fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
-    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
-    o.bus.write(current_stack_location, o.status_reg);
-    o.stack_ptr -= 1;
+    o.push_to_stack(o.status_reg);
     return 0;
 }
 
 #[allow(non_snake_case)]
 fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
-    o.stack_ptr += 1;
-    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
-    o.accumulator = o.bus.read(current_stack_location);
+    o.accumulator = o.pop_from_stack();
     return 0;
 }
 
 #[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
-    o.stack_ptr += 1;
-    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
-    o.status_reg = o.bus.read(current_stack_location);
+    o.status_reg = o.pop_from_stack();
     return 0;
 }
 
