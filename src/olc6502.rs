@@ -474,7 +474,12 @@ fn BEQ(o: &mut Olc6502) -> u8 { // Branch on Result Zero
 
 #[allow(non_snake_case)]
 fn BIT(o: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
-    return 0x0; 
+    let fetched = o.fetch();
+    let data = o.accumulator & fetched;
+    o.set_flag(Flags6502::Z, data == 0);
+    o.set_flag(Flags6502::N, fetched & (1 << 7) == 1);
+    o.set_flag(Flags6502::V, fetched & (1 << 6) == 1);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1185,6 +1190,18 @@ mod tests {
         BEQ(&mut o);
         assert!(o.prog_ctr == addr); // no jump
         assert!(o.cycles == current_cycles); 
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BIT() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF0;
+        o.fetched_data = 0x0F;
+        BIT(&mut o);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::V) == 0);
     }
 
     #[test]
