@@ -602,7 +602,10 @@ fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
 
 #[allow(non_snake_case)]
 fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
-    return 0x0; 
+    o.stack_ptr += 1;
+    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
+    o.accumulator = o.bus.read(current_stack_location);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1517,6 +1520,18 @@ mod tests {
         PHP(&mut o);
         assert!(o.bus.read(stack_end) == 0x14);
         assert!(o.stack_ptr == old_stack_ptr - 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLA() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.bus.write(stack_end, 0x14);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLA(&mut o);
+        assert!(o.accumulator == 0x14);
+        assert!(o.stack_ptr == stack_end as u8);
     }
     // endregion
 //endregion
