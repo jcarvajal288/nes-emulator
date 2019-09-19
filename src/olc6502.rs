@@ -664,13 +664,10 @@ fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
 
 #[allow(non_snake_case)]
 fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
-    o.stack_ptr += 1;
-    o.status_reg = o.bus.read(o.stack_top());
+    o.status_reg = o.pop_from_stack();
 
-    o.stack_ptr += 1;
-    o.prog_ctr = o.bus.read(o.stack_top()) as u16;
-    o.stack_ptr += 1;
-    o.prog_ctr |= (o.bus.read(o.stack_top()) as u16) << 8;
+    o.prog_ctr = o.pop_from_stack() as u16;
+    o.prog_ctr |= (o.pop_from_stack() as u16) << 8;
     return 0;
 }
 
