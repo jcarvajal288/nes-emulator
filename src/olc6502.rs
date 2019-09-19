@@ -809,6 +809,23 @@ mod tests {
         assert!(o.get_flag(Flags6502::U) == 1);
     }
 
+    fn test_nmi() {
+        let mut o: Olc6502 = create_olc6502();
+        o.prog_ctr = 0x11EC;
+        o.status_reg = 0x28;
+        o.bus.write(0xFFFA, 0xAD);
+        o.bus.write(0xFFFB, 0xDE);
+        o.set_flag(Flags6502::I, true);
+        o.nmi();
+        assert!(o.bus.read(0x01FF) == 0x11);
+        assert!(o.bus.read(0x01FE) == 0xEC);
+        assert!(o.bus.read(0x01FD) == 0x28);
+        assert!(o.prog_ctr == 0xDEAD);
+        assert!(o.get_flag(Flags6502::I) == 1);
+        assert!(o.get_flag(Flags6502::B) == 0);
+        assert!(o.get_flag(Flags6502::U) == 1);
+    }
+
     // addressing mode tests
     // region
     #[test]
