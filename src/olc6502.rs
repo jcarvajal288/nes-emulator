@@ -610,7 +610,10 @@ fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
 
 #[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
-    return 0x0; 
+    o.stack_ptr += 1;
+    let current_stack_location = STACK_BASE | o.stack_ptr as u16;
+    o.status_reg = o.bus.read(current_stack_location);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1531,6 +1534,18 @@ mod tests {
         o.stack_ptr = (stack_end as u8) - 1;
         PLA(&mut o);
         assert!(o.accumulator == 0x14);
+        assert!(o.stack_ptr == stack_end as u8);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLP() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.bus.write(stack_end, 0x14);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLP(&mut o);
+        assert!(o.status_reg == 0x14);
         assert!(o.stack_ptr == stack_end as u8);
     }
     // endregion
