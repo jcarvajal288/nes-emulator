@@ -585,7 +585,7 @@ fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
     let data = o.fetch();
     let result = data - 1;
     o.set_flag(Flags6502::N, (result & 0x80) > 1);
-    o.set_flag(Flags6502::Z, (result as u8) == 0x00);
+    o.set_flag(Flags6502::Z, result == 0x00);
     o.bus.write(o.addr_abs, result);
     return 0;
 }
@@ -594,7 +594,7 @@ fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
 fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
     o.x_reg -= 1;
     o.set_flag(Flags6502::N, (o.x_reg & 0x80) > 1);
-    o.set_flag(Flags6502::Z, (o.x_reg as u8) == 0x00);
+    o.set_flag(Flags6502::Z, o.x_reg == 0x00);
     return 0;
 }
 
@@ -602,13 +602,17 @@ fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
 fn DEY(o: &mut Olc6502) -> u8 { // Decrement Index Y by One
     o.y_reg -= 1;
     o.set_flag(Flags6502::N, (o.y_reg & 0x80) > 1);
-    o.set_flag(Flags6502::Z, (o.y_reg as u8) == 0x00);
+    o.set_flag(Flags6502::Z, o.y_reg == 0x00);
     return 0;
 }
 
 #[allow(non_snake_case)]
 fn EOR(o: &mut Olc6502) -> u8 { // "Exclusive-OR" Memory with Accumulator
-    return 0x0; 
+    let data = o.fetch();
+    o.accumulator ^= data;
+    o.set_flag(Flags6502::N, (o.accumulator & 0x80) > 1);
+    o.set_flag(Flags6502::Z, o.accumulator == 0x00);
+    return 1; 
 }
 
 #[allow(non_snake_case)]
@@ -1820,6 +1824,41 @@ mod tests {
         assert!(o.get_flag(Flags6502::N) == 1);
     }
 
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_EOR_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x45;
+        o.accumulator = 0x30;
+        EOR(&mut o);
+        assert!(o.accumulator == 0x75);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_EOR_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x80;
+        o.accumulator = 0x45;
+        EOR(&mut o);
+        assert!(o.accumulator == 0xC5);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_EOR_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0xFF;
+        o.accumulator = 0xFF;
+        EOR(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
 
     #[test]
     #[allow(non_snake_case)]
