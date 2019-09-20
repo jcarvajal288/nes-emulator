@@ -582,7 +582,12 @@ fn CPY(o: &mut Olc6502) -> u8 { // Compare Memory And Index Y
 
 #[allow(non_snake_case)]
 fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
-    return 0x0; 
+    let data = o.fetch();
+    let result = data - 1;
+    o.set_flag(Flags6502::N, (result & 0x80) > 1);
+    o.set_flag(Flags6502::Z, (result as u8) == 0x00);
+    o.bus.write(o.addr_abs, result);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1579,6 +1584,30 @@ mod tests {
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEC_memory_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x10;
+        o.fetched_data = 0x01;
+        DEC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x0);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEC_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x10;
+        o.fetched_data = 0x8F;
+        DEC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x8E);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
