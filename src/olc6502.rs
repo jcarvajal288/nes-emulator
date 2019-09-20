@@ -617,17 +617,28 @@ fn EOR(o: &mut Olc6502) -> u8 { // "Exclusive-OR" Memory with Accumulator
 
 #[allow(non_snake_case)]
 fn INC(o: &mut Olc6502) -> u8 { // Increment Memory by One
-    return 0x0; 
+    let data = o.fetch();
+    let result = ((data as u16) + 1) as u8; // cast to u16 to handle incrementing 0xFF
+    o.set_flag(Flags6502::N, (result & 0x80) > 1);
+    o.set_flag(Flags6502::Z, result == 0x00);
+    o.bus.write(o.addr_abs, result);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn INX(o: &mut Olc6502) -> u8 { // Increment Index X by One
-    return 0x0; 
+    o.x_reg = ((o.x_reg as u16) + 1) as u8; // cast to u16 to handle incrementing 0xFF
+    o.set_flag(Flags6502::N, (o.x_reg & 0x80) > 1);
+    o.set_flag(Flags6502::Z, o.x_reg == 0x00);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn INY(o: &mut Olc6502) -> u8 { // Increment Index Y by One
-    return 0x0; 
+    o.y_reg = ((o.y_reg as u16) + 1) as u8; // cast to u16 to handle incrementing 0xFF
+    o.set_flag(Flags6502::N, (o.y_reg & 0x80) > 1);
+    o.set_flag(Flags6502::Z, o.y_reg == 0x00);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1858,6 +1869,107 @@ mod tests {
         assert!(o.accumulator == 0x00);
         assert!(o.get_flag(Flags6502::Z) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INC_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x70;
+        INC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x71);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INC_memory_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x10;
+        o.fetched_data = 0xFF;
+        INC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x0);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INC_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x10;
+        o.fetched_data = 0x80;
+        INC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x81);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INX_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x70;
+        INX(&mut o);
+        assert!(o.x_reg == 0x71);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INX_memory_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0xFF;
+        INX(&mut o);
+        assert!(o.x_reg == 0x0);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INX_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x80;
+        INX(&mut o);
+        assert!(o.x_reg == 0x81);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INY_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x70;
+        INY(&mut o);
+        assert!(o.y_reg == 0x71);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INY_memory_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0xFF;
+        INY(&mut o);
+        assert!(o.y_reg == 0x0);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_INY_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x80;
+        INY(&mut o);
+        assert!(o.y_reg == 0x81);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
