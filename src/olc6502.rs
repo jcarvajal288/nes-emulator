@@ -508,7 +508,9 @@ fn BPL(o: &mut Olc6502) -> u8 { // Branch on Result Plus
 
 #[allow(non_snake_case)]
 fn BRK(o: &mut Olc6502) -> u8 { // Force Break
-    return 0x0; 
+    o.nmi();
+    o.prog_ctr += 1;
+    return 0;
 }
 
 #[allow(non_snake_case)]
