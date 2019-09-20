@@ -1588,6 +1588,17 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
+    fn op_DEC_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x70;
+        DEC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x6F);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
     fn op_DEC_memory_zero() {
         let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x10;
