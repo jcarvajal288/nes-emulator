@@ -600,7 +600,10 @@ fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
 
 #[allow(non_snake_case)]
 fn DEY(o: &mut Olc6502) -> u8 { // Decrement Index Y by One
-    return 0x0; 
+    o.y_reg -= 1;
+    o.set_flag(Flags6502::N, (o.y_reg & 0x80) > 1);
+    o.set_flag(Flags6502::Z, (o.y_reg as u8) == 0x00);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1780,6 +1783,39 @@ mod tests {
         o.x_reg = 0x8F;
         DEX(&mut o);
         assert!(o.x_reg == 0x8E);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEY_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x70;
+        DEY(&mut o);
+        assert!(o.y_reg == 0x6F);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEY_memory_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x01;
+        DEY(&mut o);
+        assert!(o.y_reg == 0x0);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEY_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x8F;
+        DEY(&mut o);
+        assert!(o.y_reg == 0x8E);
         assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
     }
