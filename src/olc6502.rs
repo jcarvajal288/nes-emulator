@@ -555,7 +555,11 @@ fn CLV(o: &mut Olc6502) -> u8 { // Clear Overflow Flag
 
 #[allow(non_snake_case)]
 fn CMP(o: &mut Olc6502) -> u8 { // Compare Memory And Accumulator
-    return 0x0; 
+    let data = o.fetch();
+    o.set_flag(Flags6502::C, o.accumulator >= data);
+    o.set_flag(Flags6502::Z, o.accumulator == data);
+    o.set_flag(Flags6502::N, o.accumulator >= 0x80);
+    return 1; 
 }
 
 #[allow(non_snake_case)]
@@ -1495,6 +1499,30 @@ mod tests {
         o.set_flag(Flags6502::V, true);
         CLV(&mut o);
         assert!(o.get_flag(Flags6502::V) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CMP_GT() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x81;
+        o.fetched_data = 0x70;
+        CMP(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CMP_Zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x70;
+        o.fetched_data = 0x70;
+        CMP(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
