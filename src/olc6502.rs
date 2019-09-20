@@ -592,7 +592,10 @@ fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
 
 #[allow(non_snake_case)]
 fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
-    return 0x0; 
+    o.x_reg -= 1;
+    o.set_flag(Flags6502::N, (o.x_reg & 0x80) > 1);
+    o.set_flag(Flags6502::Z, (o.x_reg as u8) == 0x00);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -1105,6 +1108,133 @@ mod tests {
         assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_pos_pos() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x04;
+        o.fetched_data = 0x14;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x18);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_pos_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x78;
+        o.fetched_data = 0x78;
+        ADC(&mut o);
+        assert!(o.accumulator == 0xF0);
+        assert!(o.get_flag(Flags6502::V) == 1);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_neg_pos() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x78;
+        o.fetched_data = 0xEC;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x64);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_pos_neg_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x04;
+        o.fetched_data = 0x90;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x94);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_neg_pos_pos() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xFC;
+        o.fetched_data = 0x60;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x5C);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_neg_pos_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x88;
+        o.fetched_data = 0x04;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x8C);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_neg_neg_pos() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x88;
+        o.fetched_data = 0x88;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x10);
+        assert!(o.get_flag(Flags6502::V) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_neg_neg_neg() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF6;
+        o.fetched_data = 0xF6;
+        ADC(&mut o);
+        assert!(o.accumulator == 0xEC);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ADC_zero_out() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x14;
+        o.fetched_data = 0xEC;
+        ADC(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+    }
+
 
     #[test]
     #[allow(non_snake_case)]
@@ -1623,129 +1753,37 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_ADC_pos_pos_pos() {
+    fn op_DEX_positive() {
         let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x04;
-        o.fetched_data = 0x14;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x18);
-        assert!(o.get_flag(Flags6502::V) == 0);
+        o.x_reg = 0x70;
+        DEX(&mut o);
+        assert!(o.x_reg == 0x6F);
+        assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
     }
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_ADC_pos_pos_neg() {
+    fn op_DEX_memory_zero() {
         let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x78;
-        o.fetched_data = 0x78;
-        ADC(&mut o);
-        assert!(o.accumulator == 0xF0);
-        assert!(o.get_flag(Flags6502::V) == 1);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_pos_neg_pos() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x78;
-        o.fetched_data = 0xEC;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x64);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_pos_neg_neg() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x04;
-        o.fetched_data = 0x90;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x94);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_neg_pos_pos() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0xFC;
-        o.fetched_data = 0x60;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x5C);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_neg_pos_neg() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x88;
-        o.fetched_data = 0x04;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x8C);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_neg_neg_pos() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x88;
-        o.fetched_data = 0x88;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x10);
-        assert!(o.get_flag(Flags6502::V) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_neg_neg_neg() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0xF6;
-        o.fetched_data = 0xF6;
-        ADC(&mut o);
-        assert!(o.accumulator == 0xEC);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADC_zero_out() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x14;
-        o.fetched_data = 0xEC;
-        ADC(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        o.x_reg = 0x01;
+        DEX(&mut o);
+        assert!(o.x_reg == 0x0);
         assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEX_memory_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x8F;
+        DEX(&mut o);
+        assert!(o.x_reg == 0x8E);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
 
     #[test]
     #[allow(non_snake_case)]
