@@ -659,17 +659,20 @@ fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
 
 #[allow(non_snake_case)]
 fn LDA(o: &mut Olc6502) -> u8 { // Load Accumulator with Memory
-    return 0x0; 
+    o.accumulator = o.fetch();
+    return 1;
 }
 
 #[allow(non_snake_case)]
 fn LDX(o: &mut Olc6502) -> u8 { // Load Index X with Memory
-    return 0x0; 
+    o.x_reg = o.fetch();
+    return 1;
 }
 
 #[allow(non_snake_case)]
 fn LDY(o: &mut Olc6502) -> u8 { // Load Index Y with Memory
-    return 0x0; 
+    o.y_reg = o.fetch();
+    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -2062,6 +2065,33 @@ mod tests {
         assert!(o.prog_ctr == 0x1000);
         assert!(lo == 0xAD);
         assert!(hi == 0xDE);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDA() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0xFA;
+        LDA(&mut o);
+        assert!(o.accumulator == 0xFA);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDX() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0xFA;
+        LDX(&mut o);
+        assert!(o.x_reg == 0xFA);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDY() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0xFA;
+        LDY(&mut o);
+        assert!(o.y_reg == 0xFA);
     }
     // endregion
 //endregion
