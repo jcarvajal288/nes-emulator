@@ -643,7 +643,8 @@ fn INY(o: &mut Olc6502) -> u8 { // Increment Index Y by One
 
 #[allow(non_snake_case)]
 fn JMP(o: &mut Olc6502) -> u8 { // Jump to New Location
-    return 0x0; 
+    o.prog_ctr = o.addr_abs;
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2032,6 +2033,16 @@ mod tests {
         PLP(&mut o);
         assert!(o.status_reg == 0x14);
         assert!(o.stack_ptr == stack_end as u8);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_JMP() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x100;
+        o.prog_ctr = 0xF;
+        JMP(&mut o);
+        assert!(o.prog_ctr == 0x100);
     }
     // endregion
 //endregion
