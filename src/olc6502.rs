@@ -649,7 +649,12 @@ fn JMP(o: &mut Olc6502) -> u8 { // Jump to New Location
 
 #[allow(non_snake_case)]
 fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
-    return 0x0; 
+    let hi = (o.prog_ctr >> 8) as u8;
+    let lo = (o.prog_ctr & 0x00FF) as u8;
+    o.push_to_stack(hi);
+    o.push_to_stack(lo);
+    o.prog_ctr = o.addr_abs;
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2043,6 +2048,20 @@ mod tests {
         o.prog_ctr = 0xF;
         JMP(&mut o);
         assert!(o.prog_ctr == 0x100);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_JSR() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x1000;
+        o.prog_ctr = 0xDEAD;
+        JSR(&mut o);
+        let lo = o.pop_from_stack();
+        let hi = o.pop_from_stack();
+        assert!(o.prog_ctr == 0x1000);
+        assert!(lo == 0xAD);
+        assert!(hi == 0xDE);
     }
     // endregion
 //endregion
