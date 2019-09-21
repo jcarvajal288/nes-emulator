@@ -677,11 +677,22 @@ fn LDY(o: &mut Olc6502) -> u8 { // Load Index Y with Memory
 
 #[allow(non_snake_case)]
 fn LSR(o: &mut Olc6502) -> u8 { // Shift One Bit Right (Memory or Accumulator)
-    return 0x0; 
+    let data = o.fetch();
+    let temp = (data as u16) >> 1;
+    o.set_flag(Flags6502::C, temp > 0xFF);
+    o.set_flag(Flags6502::N, (temp & 0x80) > 1);
+    o.set_flag(Flags6502::Z, (temp as u8) == 0x00);
+    let result = temp as u8;
+    if o.lookup[o.opcode as usize].addrmode as usize == ACC as usize {
+        o.accumulator = result;
+    } else {
+        o.bus.write(o.addr_abs, result);
+    }
+    return 0;
 }
 
 #[allow(non_snake_case)]
-fn NOP(o: &mut Olc6502) -> u8 { // No Operation
+fn NOP(_: &mut Olc6502) -> u8 { // No Operation
     return 0x0; 
 }
 
@@ -2093,6 +2104,34 @@ mod tests {
         LDY(&mut o);
         assert!(o.y_reg == 0xFA);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LSR_ACC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x01;
+        o.addr_abs = 0x100;
+        o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
+        LSR(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LSR_non_ACC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x45;
+        o.addr_abs = 0x100;
+        LSR(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0x22);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 0);
+    }
+
     // endregion
 //endregion
 }
