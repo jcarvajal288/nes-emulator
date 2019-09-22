@@ -698,7 +698,11 @@ fn NOP(_: &mut Olc6502) -> u8 { // No Operation
 
 #[allow(non_snake_case)]
 fn ORA(o: &mut Olc6502) -> u8 { // "OR" Memory with Accumulator
-    return 0x0; 
+    let data: u8 = o.fetch();
+    o.accumulator |= data;
+    o.set_flag(Flags6502::Z, o.accumulator == 0x00);
+    o.set_flag(Flags6502::N, o.accumulator & 0x80 >= 1);
+    return 1;
 }
 
 #[allow(non_snake_case)]
@@ -2007,6 +2011,18 @@ mod tests {
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ORA() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF9;
+        o.fetched_data = 0x45;
+        ORA(&mut o);
+        assert!(o.accumulator == 0xFD);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
