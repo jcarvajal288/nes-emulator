@@ -759,17 +759,20 @@ fn SBC(o: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
 
 #[allow(non_snake_case)]
 fn SEC(o: &mut Olc6502) -> u8 { // Set Carry Flag
-    return 0x0; 
+    o.set_flag(Flags6502::C, true);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
 fn SED(o: &mut Olc6502) -> u8 { // Set Decimal Mode (unused)
-    return 0x0; 
+    o.set_flag(Flags6502::D, true);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
 fn SEI(o: &mut Olc6502) -> u8 { // Set Interrupt Disable Status
-    return 0x0; 
+    o.set_flag(Flags6502::I, true);
+    return 0; 
 }
 
 #[allow(non_snake_case)]
@@ -2132,6 +2135,32 @@ mod tests {
         assert!(o.get_flag(Flags6502::C) == 0);
     }
 
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SEC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::C, false);
+        SEC(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SED() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::D, false);
+        SED(&mut o);
+        assert!(o.get_flag(Flags6502::D) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SEI() {
+        let mut o: Olc6502 = create_olc6502();
+        o.set_flag(Flags6502::I, false);
+        SEI(&mut o);
+        assert!(o.get_flag(Flags6502::I) == 1);
+    }
     // endregion
 //endregion
 }
