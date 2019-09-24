@@ -781,17 +781,20 @@ fn SEI(o: &mut Olc6502) -> u8 { // Set Interrupt Disable Status
 
 #[allow(non_snake_case)]
 fn STA(o: &mut Olc6502) -> u8 { // Store Accumulator in Memory
-    return 0x0; 
+    o.bus.write(o.addr_abs, o.accumulator);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn STX(o: &mut Olc6502) -> u8 { // Store Index X in Memory
-    return 0x0; 
+    o.bus.write(o.addr_abs, o.x_reg);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn STY(o: &mut Olc6502) -> u8 { // Store Index Y in Memory
-    return 0x0; 
+    o.bus.write(o.addr_abs, o.y_reg);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2176,6 +2179,36 @@ mod tests {
         o.set_flag(Flags6502::I, false);
         SEI(&mut o);
         assert!(o.get_flag(Flags6502::I) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_STA() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x100;
+        o.accumulator = 0xDE;
+        STA(&mut o);
+        assert!(o.bus.read(o.addr_abs) == o.accumulator);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_STX() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x100;
+        o.x_reg = 0xDE;
+        STX(&mut o);
+        assert!(o.bus.read(o.addr_abs) == o.x_reg);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_STY() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x100;
+        o.y_reg = 0xDE;
+        STY(&mut o);
+        assert!(o.bus.read(o.addr_abs) == o.y_reg);
     }
     // endregion
 //endregion
