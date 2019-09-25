@@ -817,7 +817,10 @@ fn TAY(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index Y
 
 #[allow(non_snake_case)]
 fn TSX(o: &mut Olc6502) -> u8 { // Transfer Stack Pointer to Index X
-    return 0x0; 
+    o.x_reg = o.stack_ptr;
+    o.set_flag(Flags6502::Z, o.x_reg == 0);
+    o.set_flag(Flags6502::N, o.x_reg & 0x80 > 0);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2247,6 +2250,15 @@ mod tests {
         o.accumulator = 0xEA;
         TAY(&mut o);
         assert!(o.y_reg == 0xEA);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TSX() {
+        let mut o: Olc6502 = create_olc6502();
+        o.stack_ptr = 0xEA;
+        TSX(&mut o);
+        assert!(o.x_reg == 0xEA);
     }
     // endregion
 //endregion
