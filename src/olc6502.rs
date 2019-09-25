@@ -750,7 +750,9 @@ fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
 
 #[allow(non_snake_case)]
 fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
-    return 0x0; 
+    o.prog_ctr = o.pop_from_stack() as u16;
+    o.prog_ctr |= (o.pop_from_stack() as u16) << 8;
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2098,6 +2100,18 @@ mod tests {
         assert!(o.prog_ctr == 0x1000);
         assert!(lo == 0xAD);
         assert!(hi == 0xDE);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_RTS() {
+        let mut o: Olc6502 = create_olc6502();
+        o.addr_abs = 0x1000;
+        o.prog_ctr = 0xDEAD;
+        JSR(&mut o);
+        assert!(o.prog_ctr == 0x1000);
+        RTS(&mut o);
+        assert!(o.prog_ctr == 0xDEAD);
     }
 
     #[test]
