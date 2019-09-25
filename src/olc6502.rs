@@ -801,12 +801,18 @@ fn STY(o: &mut Olc6502) -> u8 { // Store Index Y in Memory
 
 #[allow(non_snake_case)]
 fn TAX(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index X
-    return 0x0; 
+    o.x_reg = o.accumulator;
+    o.set_flag(Flags6502::Z, o.x_reg == 0);
+    o.set_flag(Flags6502::N, o.x_reg & 0x80 > 0);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn TAY(o: &mut Olc6502) -> u8 { // Transfer Accumulator to Index Y
-    return 0x0; 
+    o.y_reg = o.accumulator;
+    o.set_flag(Flags6502::Z, o.y_reg == 0);
+    o.set_flag(Flags6502::N, o.y_reg & 0x80 > 0);
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2223,6 +2229,24 @@ mod tests {
         o.y_reg = 0xDE;
         STY(&mut o);
         assert!(o.bus.read(o.addr_abs) == o.y_reg);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TAX() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xEA;
+        TAX(&mut o);
+        assert!(o.x_reg == 0xEA);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TAY() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xEA;
+        TAY(&mut o);
+        assert!(o.y_reg == 0xEA);
     }
     // endregion
 //endregion
