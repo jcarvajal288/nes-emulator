@@ -847,21 +847,28 @@ fn TSX(o: &mut Olc6502) -> u8 { // Transfer Stack Pointer to Index X
 
 #[allow(non_snake_case)]
 fn TXA(o: &mut Olc6502) -> u8 { // Transfer Index X to Accumulator
-    return 0x0; 
+    o.accumulator = o.x_reg;
+    o.set_flag(Flags6502::Z, o.accumulator == 0);
+    o.set_flag(Flags6502::N, o.accumulator & 0x80 > 0);
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn TXS(o: &mut Olc6502) -> u8 { // Transfer Index X to Stack Register
-    return 0x0; 
+    o.stack_ptr = o.x_reg;
+    return 0;
 }
 
 #[allow(non_snake_case)]
 fn TYA(o: &mut Olc6502) -> u8 { // Transfer Index Y to Accumulator
-    return 0x0; 
+    o.accumulator = o.y_reg;
+    o.set_flag(Flags6502::Z, o.accumulator == 0);
+    o.set_flag(Flags6502::N, o.accumulator & 0x80 > 0);
+    return 0;
 }
 
 #[allow(non_snake_case)]
-fn XXX(o: &mut Olc6502) -> u8 { // Undefined Instruction
+fn XXX(_: &mut Olc6502) -> u8 { // Undefined Instruction
     return 0x0; 
 }
 // endregion
@@ -2322,6 +2329,8 @@ mod tests {
         o.accumulator = 0xEA;
         TAX(&mut o);
         assert!(o.x_reg == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
@@ -2331,6 +2340,8 @@ mod tests {
         o.accumulator = 0xEA;
         TAY(&mut o);
         assert!(o.y_reg == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
@@ -2340,6 +2351,41 @@ mod tests {
         o.stack_ptr = 0xEA;
         TSX(&mut o);
         assert!(o.x_reg == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TXA() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0xEA;
+        TXA(&mut o);
+        assert!(o.accumulator == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TXS() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0xEA;
+        TXS(&mut o);
+        assert!(o.stack_ptr == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_TYA() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0xEA;
+        TYA(&mut o);
+        assert!(o.accumulator == 0xEA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
     // endregion
 //endregion
