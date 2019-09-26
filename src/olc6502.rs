@@ -747,7 +747,18 @@ fn ROL(o: &mut Olc6502) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
 
 #[allow(non_snake_case)]
 fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
-    return 0x0; 
+    let data = o.fetch();
+    let flag_c = o.get_flag(Flags6502::C);
+    o.set_flag(Flags6502::C, data & 0x1 > 0);
+    let result: u8 = (data >> 1 | flag_c << 7) as u8;
+    o.set_flag(Flags6502::Z, result == 0);
+    o.set_flag(Flags6502::N, result & 0x80 > 0);
+    if o.lookup[o.opcode as usize].addrmode as usize == ACC as usize {
+        o.accumulator = result;
+    } else {
+        o.bus.write(o.addr_abs, result);
+    }
+    return 0;
 }
 
 #[allow(non_snake_case)]
@@ -2194,7 +2205,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x80;
         o.addr_abs = 0x100;
-        o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
+        o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
         o.set_flag(Flags6502::C, true);
         ROL(&mut o);
         assert!(o.accumulator == 0x01);
@@ -2212,6 +2223,35 @@ mod tests {
         o.set_flag(Flags6502::C, true);
         ROL(&mut o);
         assert!(o.bus.read(o.addr_abs) == 0x8B);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ROR_ACC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x01;
+        o.addr_abs = 0x100;
+        o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
+        o.set_flag(Flags6502::C, true);
+        ROR(&mut o);
+        assert!(o.accumulator == 0x80);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_ROR_non_ACC() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x44;
+        o.addr_abs = 0x100;
+        o.set_flag(Flags6502::C, true);
+        ROR(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0xA2);
         assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
         assert!(o.get_flag(Flags6502::C) == 0);
