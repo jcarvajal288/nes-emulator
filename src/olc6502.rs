@@ -2388,5 +2388,37 @@ mod tests {
         assert!(o.get_flag(Flags6502::N) == 1);
     }
     // endregion
+
+    // Functional tests
+    // region
+    #[test]
+    fn load_program_into_memory() {
+        // Load Program (assembled at https://www.masswerk.at/6502/assembler.html)
+		/*
+			*=$8000
+			LDX #10
+			STX $0000
+			LDX #3
+			STX $0001
+			LDY $0000
+			LDA #0
+			CLC
+			loop
+			ADC $0001
+			DEY
+			BNE loop
+			STA $0002
+			NOP
+			NOP
+			NOP
+		*/
+		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
+        let program_length: usize = assembled_source.split_whitespace().count();
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.load_bytes_at(0x8000, assembled_source.clone());
+        let read_program = o.bus.read_bytes_at(0x8000, program_length); 
+        println!("{}", read_program);
+        assert!(read_program == assembled_source.replace(" ", ""));
+    }
 //endregion
 }

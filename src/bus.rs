@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 //use super::olc6502;
 
+extern crate hex;
+
 pub struct Bus {
     //cpu: olc6502::Olc6502,
     ram: [u8; 64 * 1024],
@@ -25,8 +27,27 @@ impl Bus {
 
     pub fn read(&self, addr: u16) -> u8 {
         let _read_only: bool = false; // this will be a parameter in the future
-
         return self.ram[usize::from(addr)];
+    }
+
+    pub fn load_bytes_at(&mut self, addr: u16, data: String) {
+        let bytes: Vec<u8> = data
+            .split_whitespace()
+            .map(|x| u8::from_str_radix(x, 16).unwrap())
+            .collect();
+        for (offset, byte) in bytes.iter().enumerate() {
+            let abs_addr = addr + (offset as u16);
+            self.write(abs_addr, *byte);
+        }
+    }
+
+    pub fn read_bytes_at(&self, addr: u16, num_bytes: usize) -> String {
+        let mut result: Vec<u8> = Vec::new();
+        for offset in 0..num_bytes {
+            let abs_addr = addr + (offset as u16);
+            result.push(self.read(abs_addr));
+        }
+        return hex::encode_upper(result);
     }
 }
 
