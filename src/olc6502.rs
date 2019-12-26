@@ -99,7 +99,7 @@ impl Olc6502 {
         }
     }
 
-    fn clock(mut self) {
+    fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.prog_ctr);
             self.prog_ctr += 1;
@@ -109,14 +109,20 @@ impl Olc6502 {
             self.cycles = self.lookup[op_index].cycles;
 
             // execute next instruction
-            let additional_cycle1: u8 = (self.lookup[op_index].addrmode)(&mut self);
-            let additional_cycle2: u8 = (self.lookup[op_index].operate)(&mut self);
+            let additional_cycle1: u8 = (self.lookup[op_index].addrmode)(self);
+            let additional_cycle2: u8 = (self.lookup[op_index].operate)(self);
 
             // add additional cycles if necessary
             self.cycles += additional_cycle1 & additional_cycle2;
         }
 
         self.cycles -= 1;
+    }
+
+    fn run_program(&mut self) {
+        while self.lookup[self.opcode as usize].name != "NOP" {
+            self.clock();
+        }
     }
 
     fn stack_top(&self) -> u16 {
@@ -2393,6 +2399,17 @@ mod tests {
     // region
     #[test]
     fn load_program_into_memory() {
+		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
+        let program_length: usize = assembled_source.split_whitespace().count();
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.load_bytes_at(0x8000, assembled_source.clone());
+        let read_program = o.bus.read_bytes_at(0x8000, program_length); 
+        println!("{}", read_program);
+        assert!(read_program == assembled_source.replace(" ", ""));
+    }
+
+    #[test]
+    fn multiply_10_by_3() {
         // Load Program (assembled at https://www.masswerk.at/6502/assembler.html)
 		/*
 			*=$8000
@@ -2413,12 +2430,14 @@ mod tests {
 			NOP
 		*/
 		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
-        let program_length: usize = assembled_source.split_whitespace().count();
         let mut o: Olc6502 = create_olc6502();
-        o.bus.load_bytes_at(0x8000, assembled_source.clone());
-        let read_program = o.bus.read_bytes_at(0x8000, program_length); 
-        println!("{}", read_program);
-        assert!(read_program == assembled_source.replace(" ", ""));
+        o.bus.load_bytes_at(0x8000, assembled_source);
+        // set reset vector
+        o.bus.write(0xFFFC, 0x00);
+        o.bus.write(0xFFFD, 0x80);
+        o.reset();
+        o.run_program();
+        assert!(o.bus.read(0x0002) == 0x1E);
     }
 //endregion
 }
