@@ -102,6 +102,7 @@ impl Olc6502 {
     fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.prog_ctr);
+            println!("{}", self.lookup[self.opcode as usize].name);
             self.prog_ctr += 1;
 
             // Get starting number of cycles
@@ -333,19 +334,12 @@ fn IMP(_: &mut Olc6502) -> u8 { // Implied
 
 #[allow(non_snake_case)]
 fn REL(o: &mut Olc6502) -> u8 { // Relative Addressing
-    // javidx9 saves the offset as its own 'addr_rel' variable and
-    // computes the final address later, probably in the opcode instruction
-    /* 
-    o.addr_rel = u16::from(o.read(o.prog_ctr));
+    let mut argument: u16 = o.read(o.prog_ctr) as u16;
     o.prog_ctr += 1;
-    if o.addr_rel & 0x80 == 1 {
-        o.addr_rel |= 0xFF00;
+    if argument & 0x80 > 1 {
+        argument |= 0xFF00;
     }
-    */
-    let offset: u8 = o.read(o.prog_ctr);
-    o.addr_abs = o.prog_ctr + u16::from(offset);
-    o.addr_abs &= 0x00FF;
-    o.prog_ctr += 1;
+    o.addr_abs = u16::wrapping_add(o.prog_ctr, argument);
     return 0;
 }
 
@@ -1009,7 +1003,7 @@ mod tests {
         o.prog_ctr = current_addr;
         o.bus.write(current_addr, offset);
         REL(&mut o);
-        let new_addr: u16 = current_addr + u16::from(offset);
+        let new_addr: u16 = current_addr + u16::from(offset) + 1;
         assert!(o.addr_abs == new_addr);
     }
 
@@ -1017,12 +1011,12 @@ mod tests {
     #[allow(non_snake_case)]
     fn am_REL_negative() {
         let mut o: Olc6502 = create_olc6502();
-        let offset: u8 = 0xE0; // -0x20
-        let current_addr: u16 = 0x24;
+        let offset: u8 = 0xFA; 
+        let current_addr: u16 = 0x8015;
         o.prog_ctr = current_addr;
         o.bus.write(current_addr, offset);
         REL(&mut o);
-        assert!(o.addr_abs == 0x04);
+        assert!(o.addr_abs == 0x8010);
     }
 
     #[test]
@@ -1494,7 +1488,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_BNE_short_jump() {
+    fn op_BNE_short_jump_forward() {
         let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
@@ -1506,6 +1500,23 @@ mod tests {
         assert!(o.prog_ctr == o.addr_abs);
         assert!(o.cycles == current_cycles + 1); 
     }
+
+    /*
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BNE_short_jump_backward() {
+        let mut o: Olc6502 = create_olc6502();
+        let addr: u16 = 0x8014;
+        let current_cycles: u8 = 2;
+        o.prog_ctr = addr;
+        o.addr_abs = addr + (0xFA as i16);
+        o.cycles = current_cycles;
+        o.set_flag(Flags6502::Z, false);
+        BNE(&mut o);
+        assert!(o.prog_ctr == 0x8010);
+        assert!(o.cycles == current_cycles + 1); 
+    }
+    */
 
     #[test]
     #[allow(non_snake_case)]
