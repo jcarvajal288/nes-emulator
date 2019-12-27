@@ -121,6 +121,10 @@ impl Olc6502 {
     }
 
     fn run_program(&mut self) {
+        // set reset vector
+        self.bus.write(0xFFFC, 0x00);
+        self.bus.write(0xFFFD, 0x80);
+        self.reset();
         while self.lookup[self.opcode as usize].name != "NOP" {
             self.clock();
         }
@@ -2443,12 +2447,30 @@ mod tests {
 		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
         let mut o: Olc6502 = create_olc6502();
         o.bus.load_bytes_at(0x8000, assembled_source);
-        // set reset vector
-        o.bus.write(0xFFFC, 0x00);
-        o.bus.write(0xFFFD, 0x80);
-        o.reset();
         o.run_program();
         assert!(o.bus.read(0x0002) == 0x1E);
+    }
+
+    #[test]
+    fn short_loop() {
+        /* Program listing
+          *=$8000
+          LDX #$08
+          decrement:
+          DEX
+          STX $0200
+          CPX #$03
+          BNE decrement
+          STX $0201
+          NOP
+          NOP
+          NOP
+        */
+        let assembled_source: String = "A2 08 CA 8E 00 02 E0 03 D0 F8 8E 01 02 EA EA EA".to_string();
+        let mut o: Olc6502 = create_olc6502();
+        o.bus.load_bytes_at(0x8000, assembled_source);
+        o.run_program();
+        assert!(o.bus.read(0x0201) == 0x03);
     }
 //endregion
 }
