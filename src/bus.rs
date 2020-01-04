@@ -1,10 +1,7 @@
 #![allow(dead_code)]
-//use super::olc6502;
-
 extern crate hex;
 
 pub struct Bus {
-    //cpu: olc6502::Olc6502,
     ram: [u8; 64 * 1024],
 }
 
