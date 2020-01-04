@@ -1,8 +1,10 @@
 #![allow(dead_code)]
 extern crate hex;
 
+const BUS_RAM_SIZE: usize = 64 * 1024;
+
 pub struct Bus {
-    ram: [u8; 64 * 1024],
+    ram: [u8; BUS_RAM_SIZE],
 }
 
 impl PartialEq for Bus {
@@ -19,12 +21,27 @@ impl Bus {
     }
 
     pub fn write(&mut self, addr: u16, data: u8) {
-        self.ram[usize::from(addr)] = data;
+        if addr <= 0x1FFF { 
+            // cpu bus has 8k addressable range but only 
+            // 2k physical ram, so mirror 2k ram 4 times
+            self.ram[usize::from(addr & 0x7FF)] = data;
+        } else if addr >= 0x4020 { // program rom
+            self.ram[usize::from(addr)] = data;
+        }
     }
 
     pub fn read(&self, addr: u16) -> u8 {
         let _read_only: bool = false; // this will be a parameter in the future
-        return self.ram[usize::from(addr)];
+        if addr <= 0x1FFF { 
+            // cpu bus has 8k addressable range but only 
+            // 2k physical ram, so mirror 2k ram 4 times
+            return self.ram[usize::from(addr & 0x7FF)];
+        } else if addr >= 0x4020 { 
+            // program rom
+            return self.ram[usize::from(addr)];
+        } else {
+            return 0x00;
+        }
     }
 
     pub fn load_bytes_at(&mut self, addr: u16, data: String) {
@@ -50,7 +67,7 @@ impl Bus {
 
 pub fn create_bus() -> Bus {
     return Bus {
-        ram: [0x0; 64 * 1024],
+        ram: [0x0; BUS_RAM_SIZE],
     }
 }
 
@@ -70,5 +87,19 @@ mod tests {
         let mut b: Bus = create_bus();
         b.ram[0x24] = 0x20;
         assert!(b.read(0x24) == 0x20);
+    }
+
+    #[test]
+    fn write_mirrored_address() {
+        let mut b: Bus = create_bus();
+        b.write(0x1111, 0xEA);
+        assert!(b.ram[0x111] == 0xEA);
+    }
+
+    #[test]
+    fn mirrored_read() {
+        let mut b: Bus = create_bus();
+        b.ram[0x0] = 0xEA;
+        assert!(b.read(0x800) == 0xEA);
     }
 }

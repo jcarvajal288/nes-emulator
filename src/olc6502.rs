@@ -102,7 +102,7 @@ impl Olc6502 {
     fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.prog_ctr);
-            println!("{}", self.lookup[self.opcode as usize].name);
+            //println!("{}", self.lookup[self.opcode as usize].name);
             self.prog_ctr += 1;
 
             // Get starting number of cycles
