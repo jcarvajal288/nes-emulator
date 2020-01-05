@@ -120,6 +120,11 @@ impl Olc6502 {
         self.cycles -= 1;
     }
 
+    pub fn load_program(&mut self, program: String) {
+        let program_address = 0x8000;
+        self.bus.load_bytes_at(program_address, program);
+    }
+
     pub fn run_program(&mut self) {
         // set reset vector
         self.bus.write(0xFFFC, 0x00);
@@ -189,7 +194,7 @@ impl Olc6502 {
     }
 }
 
-pub fn create_olc6502(bus: bus::Bus) -> Olc6502 {
+pub fn create_olc6502() -> Olc6502 {
     let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
@@ -197,7 +202,7 @@ pub fn create_olc6502(bus: bus::Bus) -> Olc6502 {
         stack_ptr: 0,
         prog_ctr: 0,
         status_reg: 0,
-        bus: bus,
+        bus: bus::create_bus(),
         fetched_data: 0,
         addr_abs: 0,
         addr_rel: 0,
@@ -886,7 +891,7 @@ mod tests {
 
     #[test]
     fn test_status_reg_read() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.status_reg = 0x55;
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
@@ -900,7 +905,7 @@ mod tests {
 
     #[test]
     fn test_status_reg_write() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.status_reg = 0x00;
         o.set_flag(Flags6502::C, true);
         assert!(o.get_flag(Flags6502::C) == 1);
@@ -930,7 +935,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn test_irq_and_RTI() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.prog_ctr = 0x11EC;
         o.status_reg = 0x28;
         o.bus.write(0xFFFE, 0xAD);
@@ -953,7 +958,7 @@ mod tests {
     }
 
     fn test_nmi() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.prog_ctr = 0x11EC;
         o.status_reg = 0x28;
         o.bus.write(0xFFFA, 0xAD);
@@ -974,7 +979,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_ACC_test() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x65;
         ACC(&mut o);
         assert!(o.fetched_data == 0x65);
@@ -983,7 +988,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IMM_test() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = o.prog_ctr;
         IMM(&mut o);
         assert!(o.addr_abs == current_addr);
@@ -992,8 +997,8 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IMP_test() {
-        let mut test: Olc6502 = create_olc6502(bus::create_bus());
-        let reference: Olc6502 = create_olc6502(bus::create_bus());
+        let mut test: Olc6502 = create_olc6502();
+        let reference: Olc6502 = create_olc6502();
         IMP(&mut test);
         assert!(test == reference);
     }
@@ -1001,7 +1006,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_REL_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let offset: u8 = 0x20;
         let current_addr: u16 = 0x24;
         o.prog_ctr = current_addr;
@@ -1014,7 +1019,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_REL_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let offset: u8 = 0xFA; 
         let current_addr: u16 = 0x8015;
         o.prog_ctr = current_addr;
@@ -1026,7 +1031,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_ABS() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = 0x1000;
         o.bus.write(current_addr, 0x32);
         o.bus.write(current_addr+1, 0x40);
@@ -1038,7 +1043,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_ZP0() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = 0x1000;
         o.bus.write(current_addr, 0x32);
         o.prog_ctr = current_addr;
@@ -1049,7 +1054,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IND() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.bus.write(0x24, 0x00);
         o.bus.write(0x25, 0x10);
         o.bus.write(0x1000, 0x52);
@@ -1062,7 +1067,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IND_FF_page_bug() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.bus.write(0x24, 0xFF);
         o.bus.write(0x25, 0x10);
         o.bus.write(0x1000, 0xAA);
@@ -1076,7 +1081,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_ABX() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = 0x1000;
         o.x_reg = 0x04;
         o.bus.write(current_addr, 0x32);
@@ -1089,7 +1094,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_ABY() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = 0x1000;
         o.y_reg = 0x04;
         o.bus.write(current_addr, 0x32);
@@ -1102,7 +1107,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IZX_normal() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x24;
         o.bus.write(0x24, 0x74);
         o.bus.write(0x25, 0x20);
@@ -1113,7 +1118,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IZX_wrapped() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xFF;
         o.prog_ctr = 0x10;
         o.bus.write(0xFF, 0x74);
@@ -1125,7 +1130,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn am_IZY() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x10;
         o.prog_ctr = 0x24;
         o.bus.write(0x24, 0x86);
@@ -1141,7 +1146,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_AND() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xF9;
         o.fetched_data = 0x45;
         AND(&mut o);
@@ -1153,7 +1158,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ASL_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x80;
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
@@ -1167,7 +1172,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ASL_non_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x45;
         o.addr_abs = 0x100;
         ASL(&mut o);
@@ -1180,7 +1185,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADD_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xFF;
         o.fetched_data = 0x00;
         AND(&mut o);
@@ -1192,7 +1197,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADD_negative_result() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xFF;
         o.fetched_data = 0xF0;
         AND(&mut o);
@@ -1204,7 +1209,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_pos_pos_pos() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x04;
         o.fetched_data = 0x14;
         ADC(&mut o);
@@ -1218,7 +1223,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_pos_pos_neg() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x78;
         o.fetched_data = 0x78;
         ADC(&mut o);
@@ -1232,7 +1237,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_pos_neg_pos() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x78;
         o.fetched_data = 0xEC;
         ADC(&mut o);
@@ -1246,7 +1251,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_pos_neg_neg() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x04;
         o.fetched_data = 0x90;
         ADC(&mut o);
@@ -1260,7 +1265,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_neg_pos_pos() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xFC;
         o.fetched_data = 0x60;
         ADC(&mut o);
@@ -1274,7 +1279,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_neg_pos_neg() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x88;
         o.fetched_data = 0x04;
         ADC(&mut o);
@@ -1288,7 +1293,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_neg_neg_pos() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x88;
         o.fetched_data = 0x88;
         ADC(&mut o);
@@ -1302,7 +1307,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_neg_neg_neg() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xF6;
         o.fetched_data = 0xF6;
         ADC(&mut o);
@@ -1316,7 +1321,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ADC_zero_out() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x14;
         o.fetched_data = 0xEC;
         ADC(&mut o);
@@ -1331,7 +1336,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCS_carry_unset() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1346,7 +1351,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCS_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1361,7 +1366,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCS_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1376,7 +1381,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCC_carry_set() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1391,7 +1396,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCC_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1406,7 +1411,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BCC_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1421,7 +1426,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BEQ_zero_unset() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1436,7 +1441,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BIT() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xF0;
         o.fetched_data = 0x0F;
         BIT(&mut o);
@@ -1448,7 +1453,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BEQ_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1463,7 +1468,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BEQ_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1478,7 +1483,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BNE_zero_set() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1493,7 +1498,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BNE_short_jump_forward() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1509,7 +1514,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BNE_short_jump_backward() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x8014;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1525,7 +1530,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BNE_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1540,7 +1545,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BMI_negative_unset() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1555,7 +1560,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BMI_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1570,7 +1575,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BMI_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1585,7 +1590,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BPL_negative_set() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1600,7 +1605,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BPL_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1615,7 +1620,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BPL_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1630,7 +1635,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVC_overflow_set() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1645,7 +1650,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVC_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1660,7 +1665,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVC_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1675,7 +1680,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVS_overflow_unset() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1690,7 +1695,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVS_short_jump() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1705,7 +1710,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_BVS_jump_page() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let addr: u16 = 0x1000;
         let current_cycles: u8 = 2;
         o.prog_ctr = addr;
@@ -1720,7 +1725,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CLC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::C, true);
         CLC(&mut o);
         assert!(o.get_flag(Flags6502::C) == 0);
@@ -1729,7 +1734,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CLD() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::D, true);
         CLD(&mut o);
         assert!(o.get_flag(Flags6502::D) == 0);
@@ -1738,7 +1743,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CLI() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::I, true);
         CLI(&mut o);
         assert!(o.get_flag(Flags6502::I) == 0);
@@ -1747,7 +1752,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CLV() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::V, true);
         CLV(&mut o);
         assert!(o.get_flag(Flags6502::V) == 0);
@@ -1756,7 +1761,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CMP_GT() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x81;
         o.fetched_data = 0x70;
         CMP(&mut o);
@@ -1768,7 +1773,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CMP_Zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x70;
         o.fetched_data = 0x70;
         CMP(&mut o);
@@ -1780,7 +1785,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CPX_GT() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x81;
         o.fetched_data = 0x70;
         CPX(&mut o);
@@ -1792,7 +1797,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CPX_Zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x70;
         o.fetched_data = 0x70;
         CPX(&mut o);
@@ -1804,7 +1809,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CPY_GT() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x81;
         o.fetched_data = 0x70;
         CPY(&mut o);
@@ -1816,7 +1821,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_CPY_Zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x70;
         o.fetched_data = 0x70;
         CPY(&mut o);
@@ -1828,7 +1833,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEC_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x70;
         DEC(&mut o);
         assert!(o.bus.read(o.addr_abs) == 0x6F);
@@ -1839,7 +1844,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEC_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x10;
         o.fetched_data = 0x01;
         DEC(&mut o);
@@ -1851,7 +1856,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEC_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x10;
         o.fetched_data = 0x8F;
         DEC(&mut o);
@@ -1863,7 +1868,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEX_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x70;
         DEX(&mut o);
         assert!(o.x_reg == 0x6F);
@@ -1874,7 +1879,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEX_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x01;
         DEX(&mut o);
         assert!(o.x_reg == 0x0);
@@ -1885,7 +1890,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEX_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x8F;
         DEX(&mut o);
         assert!(o.x_reg == 0x8E);
@@ -1896,7 +1901,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEY_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x70;
         DEY(&mut o);
         assert!(o.y_reg == 0x6F);
@@ -1907,7 +1912,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEY_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x01;
         DEY(&mut o);
         assert!(o.y_reg == 0x0);
@@ -1918,7 +1923,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_DEY_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x8F;
         DEY(&mut o);
         assert!(o.y_reg == 0x8E);
@@ -1929,7 +1934,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_EOR_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x45;
         o.accumulator = 0x30;
         EOR(&mut o);
@@ -1941,7 +1946,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_EOR_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x80;
         o.accumulator = 0x45;
         EOR(&mut o);
@@ -1953,7 +1958,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_EOR_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFF;
         o.accumulator = 0xFF;
         EOR(&mut o);
@@ -1965,7 +1970,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INC_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x70;
         INC(&mut o);
         assert!(o.bus.read(o.addr_abs) == 0x71);
@@ -1976,7 +1981,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INC_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x10;
         o.fetched_data = 0xFF;
         INC(&mut o);
@@ -1988,7 +1993,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INC_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x10;
         o.fetched_data = 0x80;
         INC(&mut o);
@@ -2000,7 +2005,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INX_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x70;
         INX(&mut o);
         assert!(o.x_reg == 0x71);
@@ -2011,7 +2016,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INX_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xFF;
         INX(&mut o);
         assert!(o.x_reg == 0x0);
@@ -2022,7 +2027,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INX_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x80;
         INX(&mut o);
         assert!(o.x_reg == 0x81);
@@ -2033,7 +2038,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INY_positive() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x70;
         INY(&mut o);
         assert!(o.y_reg == 0x71);
@@ -2044,7 +2049,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INY_memory_zero() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0xFF;
         INY(&mut o);
         assert!(o.y_reg == 0x0);
@@ -2055,7 +2060,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_INY_memory_negative() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x80;
         INY(&mut o);
         assert!(o.y_reg == 0x81);
@@ -2066,7 +2071,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_SBC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x14;
         o.fetched_data = 0x04;
         SBC(&mut o);
@@ -2080,7 +2085,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ORA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xF9;
         o.fetched_data = 0x45;
         ORA(&mut o);
@@ -2092,7 +2097,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_PHA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
         let old_stack_ptr = o.stack_ptr;
         o.accumulator = 0x14;
@@ -2104,7 +2109,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_PHP() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
         let old_stack_ptr = o.stack_ptr;
         o.status_reg = 0x14;
@@ -2116,7 +2121,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_PLA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
@@ -2128,7 +2133,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_PLP() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
@@ -2140,7 +2145,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_JMP() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x100;
         o.prog_ctr = 0xF;
         JMP(&mut o);
@@ -2150,7 +2155,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_JSR() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x1000;
         o.prog_ctr = 0xDEAD;
         JSR(&mut o);
@@ -2164,7 +2169,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_RTS() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x1000;
         o.prog_ctr = 0xDEAD;
         JSR(&mut o);
@@ -2176,7 +2181,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_LDA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDA(&mut o);
         assert!(o.accumulator == 0xFA);
@@ -2185,7 +2190,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_LDX() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDX(&mut o);
         assert!(o.x_reg == 0xFA);
@@ -2194,7 +2199,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_LDY() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDY(&mut o);
         assert!(o.y_reg == 0xFA);
@@ -2203,7 +2208,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_LSR_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x01;
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
@@ -2217,7 +2222,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_LSR_non_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x44;
         o.addr_abs = 0x100;
         LSR(&mut o);
@@ -2230,7 +2235,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ROL_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x80;
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
@@ -2245,7 +2250,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ROL_non_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x45;
         o.addr_abs = 0x100;
         o.set_flag(Flags6502::C, true);
@@ -2259,7 +2264,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ROR_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x01;
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
@@ -2274,7 +2279,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_ROR_non_ACC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x44;
         o.addr_abs = 0x100;
         o.set_flag(Flags6502::C, true);
@@ -2289,7 +2294,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_SEC() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::C, false);
         SEC(&mut o);
         assert!(o.get_flag(Flags6502::C) == 1);
@@ -2298,7 +2303,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_SED() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::D, false);
         SED(&mut o);
         assert!(o.get_flag(Flags6502::D) == 1);
@@ -2307,7 +2312,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_SEI() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::I, false);
         SEI(&mut o);
         assert!(o.get_flag(Flags6502::I) == 1);
@@ -2316,7 +2321,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_STA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x100;
         o.accumulator = 0xDE;
         STA(&mut o);
@@ -2326,7 +2331,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_STX() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x100;
         o.x_reg = 0xDE;
         STX(&mut o);
@@ -2336,7 +2341,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_STY() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.addr_abs = 0x100;
         o.y_reg = 0xDE;
         STY(&mut o);
@@ -2346,7 +2351,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TAX() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xEA;
         TAX(&mut o);
         assert!(o.x_reg == 0xEA);
@@ -2357,7 +2362,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TAY() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xEA;
         TAY(&mut o);
         assert!(o.y_reg == 0xEA);
@@ -2368,7 +2373,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TSX() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.stack_ptr = 0xEA;
         TSX(&mut o);
         assert!(o.x_reg == 0xEA);
@@ -2379,7 +2384,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TXA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xEA;
         TXA(&mut o);
         assert!(o.accumulator == 0xEA);
@@ -2390,7 +2395,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TXS() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xEA;
         TXS(&mut o);
         assert!(o.stack_ptr == 0xEA);
@@ -2401,7 +2406,7 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn op_TYA() {
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0xEA;
         TYA(&mut o);
         assert!(o.accumulator == 0xEA);
@@ -2416,7 +2421,7 @@ mod tests {
     fn load_program_into_memory() {
 		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
         let program_length: usize = assembled_source.split_whitespace().count();
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
+        let mut o: Olc6502 = create_olc6502();
         o.bus.load_bytes_at(0x8000, assembled_source.clone());
         let read_program = o.bus.read_bytes_at(0x8000, program_length); 
         println!("{}", read_program);
@@ -2445,8 +2450,8 @@ mod tests {
 			NOP
 		*/
 		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
-        o.bus.load_bytes_at(0x8000, assembled_source);
+        let mut o: Olc6502 = create_olc6502();
+        o.load_program(assembled_source);
         o.run_program();
         assert!(o.bus.read(0x0002) == 0x1E);
     }
@@ -2467,8 +2472,8 @@ mod tests {
           NOP
         */
         let assembled_source: String = "A2 08 CA 8E 00 02 E0 03 D0 F8 8E 01 02 EA EA EA".to_string();
-        let mut o: Olc6502 = create_olc6502(bus::create_bus());
-        o.bus.load_bytes_at(0x8000, assembled_source);
+        let mut o: Olc6502 = create_olc6502();
+        o.load_program(assembled_source);
         o.run_program();
         assert!(o.bus.read(0x0201) == 0x03);
     }

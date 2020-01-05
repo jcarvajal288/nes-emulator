@@ -1,14 +1,27 @@
 #![allow(dead_code)]
-use super::olc6502;
-use super::bus;
+use super::olc2C02;
 
 pub struct Nes {
-    cpu: olc6502::Olc6502,
+    ppu: olc2C02::Olc2C02,
+}
+
+impl Nes {
+    pub fn load_program(&mut self, program: String) {
+        return self.ppu.cpu.load_program(program);
+    }
+
+    pub fn run_program(&mut self) {
+        self.ppu.cpu.run_program();
+    }
+
+    fn read_cpu_address(self, addr: u16) -> u8 {
+        return self.ppu.cpu.bus.read(addr);
+    }
 }
 
 pub fn create_nes() -> Nes {
     let nes = Nes {
-        cpu: olc6502::create_olc6502(bus::create_bus()),
+        ppu: olc2C02::create_olc2C02(),
     };
     return nes;
 }
@@ -36,8 +49,8 @@ mod tests {
         */
         let assembled_source: String = "A2 08 CA 8E 00 02 E0 03 D0 F8 8E 01 02 EA EA EA".to_string();
         let mut nes = create_nes();
-        nes.cpu.bus.load_bytes_at(0x8000, assembled_source);
-        nes.cpu.run_program();
-        assert!(nes.cpu.bus.read(0x0201) == 0x03);
+        nes.load_program(assembled_source);
+        nes.run_program();
+        assert!(nes.read_cpu_address(0x0201) == 0x03);
     }
 }
