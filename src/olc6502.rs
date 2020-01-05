@@ -120,7 +120,7 @@ impl Olc6502 {
         self.cycles -= 1;
     }
 
-    fn run_program(&mut self) {
+    pub fn run_program(&mut self) {
         // set reset vector
         self.bus.write(0xFFFC, 0x00);
         self.bus.write(0xFFFD, 0x80);
@@ -189,7 +189,7 @@ impl Olc6502 {
     }
 }
 
-fn create_olc6502(bus: bus::Bus) -> Olc6502 {
+pub fn create_olc6502(bus: bus::Bus) -> Olc6502 {
     let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
