@@ -22,7 +22,7 @@ pub struct Olc6502 {
     prog_ctr: u16,
     status_reg: u8,
 
-    bus: Box<bus::Bus>,
+    pub bus: bus::Bus,
 
     fetched_data: u8,
     addr_abs: u16,
@@ -197,7 +197,7 @@ pub fn create_olc6502(bus: bus::Bus) -> Olc6502 {
         stack_ptr: 0,
         prog_ctr: 0,
         status_reg: 0,
-        bus: Box::new(bus),
+        bus: bus,
         fetched_data: 0,
         addr_abs: 0,
         addr_rel: 0,
