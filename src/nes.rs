@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use super::cartridge;
 use super::olc2C02;
 
 pub struct Nes {
@@ -6,11 +7,25 @@ pub struct Nes {
 }
 
 impl Nes {
-    pub fn load_program(&mut self, program: String) {
+    // System Interface
+    pub fn insert_cartridge(_cartridge: &Box<cartridge::Cartridge>) {
+
+    }
+
+    pub fn reset() {
+
+    }
+
+    pub fn clock() {
+
+    }
+
+    // test functions
+    fn load_program(&mut self, program: String) {
         return self.ppu.cpu.load_program(program);
     }
 
-    pub fn run_program(&mut self) {
+    fn run_program(&mut self) {
         self.ppu.cpu.run_program();
     }
 

@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 extern crate hex;
 
+use super::cartridge;
+
 const BUS_RAM_SIZE: usize = 64 * 1024;
 
 pub struct Bus {
     ram: [u8; BUS_RAM_SIZE],
+    cartridge: Box<cartridge::Cartridge>,
 }
 
 impl PartialEq for Bus {
@@ -68,7 +71,7 @@ impl Bus {
         return hex::encode_upper(result);
     }
 
-    fn write_to_ppu(&mut self, addr: u16, data: u8) {
+    fn write_to_ppu(&mut self, addr: u16, _data: u8) {
         match addr {
             0x0000 => { // Control
                 return;
@@ -131,11 +134,16 @@ impl Bus {
             }
         }
     }
+
+    pub fn connect_cartridge(&mut self, cartridge: Box<cartridge::Cartridge>) {
+        self.cartridge = cartridge;
+    }
 }
 
 pub fn create_bus() -> Bus {
     return Bus {
         ram: [0x0; BUS_RAM_SIZE],
+        cartridge: Box::new(cartridge::Cartridge{/*empty placeholder*/}),
     }
 }
 
