@@ -25,6 +25,8 @@ impl Bus {
             // cpu bus has 8k addressable range but only 
             // 2k physical ram, so mirror 2k ram 4 times
             self.ram[usize::from(addr & 0x7FF)] = data;
+        } else if addr <= 0x3FFF { // ppu flags
+            self.write_to_ppu(addr & 0x0007, data);
         } else if addr >= 0x4020 { // program rom
             self.ram[usize::from(addr)] = data;
         }
@@ -36,6 +38,8 @@ impl Bus {
             // cpu bus has 8k addressable range but only 
             // 2k physical ram, so mirror 2k ram 4 times
             return self.ram[usize::from(addr & 0x7FF)];
+        } else if addr <= 0x3FFF { // ppu flags
+            return self.read_from_ppu(addr & 0x0007);
         } else if addr >= 0x4020 { 
             // program rom
             return self.ram[usize::from(addr)];
@@ -62,6 +66,70 @@ impl Bus {
             result.push(self.read(abs_addr));
         }
         return hex::encode_upper(result);
+    }
+
+    fn write_to_ppu(&mut self, addr: u16, data: u8) {
+        match addr {
+            0x0000 => { // Control
+                return;
+            }
+            0x0001 => { // Mask
+                return;
+            }
+            0x0002 => { // Status
+                return;
+            }
+            0x0003 => { // OAM Address
+                return;
+            }
+            0x0004 => { // OAM Data
+                return;
+            }
+            0x0005 => { // Scroll
+                return;
+            }
+            0x0006 => { // PPU Address
+                return;
+            }
+            0x0007 => { // PPU Data
+                return;
+            }
+            _ => {
+                panic!("Invalid addr in bus::write_to_ppu()");
+            }
+        }
+    }
+
+    fn read_from_ppu(&self, addr: u16) -> u8 {
+        match addr {
+            0x0000 => { // Control
+                return 0x0;
+            }
+            0x0001 => { // Mask
+                return 0x1;
+            }
+            0x0002 => { // Status
+                return 0x2;
+            }
+            0x0003 => { // OAM Address
+                return 0x3;
+            }
+            0x0004 => { // OAM Data
+                return 0x4;
+            }
+            0x0005 => { // Scroll
+                return 0x5;
+            }
+            0x0006 => { // PPU Address
+                return 0x6;
+            }
+            0x0007 => { // PPU Data
+                return 0x7;
+            }
+            _ => {
+                panic!("Invalid addr in bus::read_from_ppu()");
+            }
+        }
     }
 }
 
