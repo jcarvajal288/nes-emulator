@@ -20,25 +20,35 @@ struct Header {
 }
 
 pub fn create_cartridge_from_file(filename: &str) -> Option<Box<Cartridge>> {
+    let file_buffer: Vec<u8> = match read_rom_file(filename) {
+        Ok(file_buffer) => file_buffer,
+        Err(e) => { 
+            println!("{}", e);
+            return None
+        }
+    };
+    return Some(Box::new(Cartridge {
+        header: read_header(&file_buffer)
+    }))
+}
+
+fn read_rom_file(filename: &str) -> Result<Vec<u8>, String> {
     let mut file_buffer = Vec::new();
     let mut file = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
-            println!("ERROR: File not found: '{}'", filename);
-            return None;
+            let error_message = format!("ERROR: File not found: '{}'", filename);
+            return Err(error_message);
         }
     };
     match file.read_to_end(&mut file_buffer) {
         Ok(_) => {}
-        Err(_) => {
-            println!("ERROR: File unreadable: '{}'", filename);
-            return None;
+        Err(e) => {
+            let error_message = format!("{}", e);
+            return Err(error_message);
         }
     }
-
-    return Some(Box::new(Cartridge {
-        header: read_header(&file_buffer)
-    }))
+    return Ok(file_buffer);
 }
 
 fn read_header(file_buffer: &Vec<u8>) -> Header {
@@ -62,9 +72,7 @@ mod tests {
     #[test]
     fn verify_header_read() {
         let filename = "./test_files/nestest.nes";
-        let mut file_buffer = Vec::new();
-        let mut file = File::open(filename).unwrap();
-        file.read_to_end(&mut file_buffer).unwrap();
+        let file_buffer = read_rom_file(filename).unwrap();
         let header: Header = read_header(&file_buffer);
 
         assert!(header.name == [0x4E, 0x45, 0x53, 0x1A]);
