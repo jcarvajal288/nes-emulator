@@ -7,7 +7,7 @@ const BUS_RAM_SIZE: usize = 64 * 1024;
 
 pub struct Bus {
     ram: [u8; BUS_RAM_SIZE],
-    cartridge: Box<cartridge::Cartridge>,
+    cartridge: Option<Box<cartridge::Cartridge>>,
 }
 
 impl PartialEq for Bus {
@@ -136,14 +136,14 @@ impl Bus {
     }
 
     pub fn connect_cartridge(&mut self, cartridge: Box<cartridge::Cartridge>) {
-        self.cartridge = cartridge;
+        self.cartridge = Some(cartridge);
     }
 }
 
 pub fn create_bus() -> Bus {
     return Bus {
         ram: [0x0; BUS_RAM_SIZE],
-        cartridge: Box::new(cartridge::Cartridge{/*empty placeholder*/}),
+        cartridge: None,
     }
 }
 

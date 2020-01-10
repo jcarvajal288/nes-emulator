@@ -1510,23 +1510,6 @@ mod tests {
         assert!(o.cycles == current_cycles + 1); 
     }
 
-    /*
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_BNE_short_jump_backward() {
-        let mut o: Olc6502 = create_olc6502();
-        let addr: u16 = 0x8014;
-        let current_cycles: u8 = 2;
-        o.prog_ctr = addr;
-        o.addr_abs = addr + (0xFA as i16);
-        o.cycles = current_cycles;
-        o.set_flag(Flags6502::Z, false);
-        BNE(&mut o);
-        assert!(o.prog_ctr == 0x8010);
-        assert!(o.cycles == current_cycles + 1); 
-    }
-    */
-
     #[test]
     #[allow(non_snake_case)]
     fn op_BNE_jump_page() {
