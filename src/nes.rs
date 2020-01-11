@@ -8,8 +8,9 @@ pub struct Nes {
 
 impl Nes {
     // System Interface
-    pub fn insert_cartridge(_cartridge: &Box<cartridge::Cartridge>) {
-
+    pub fn load_rom(&mut self, filename: &str) {
+        let cartridge = cartridge::create_cartridge_from_file(filename).unwrap();
+        self.ppu.cpu.bus.connect_cartridge(cartridge);
     }
 
     pub fn reset() {
@@ -67,5 +68,13 @@ mod tests {
         nes.load_program(assembled_source);
         nes.run_program();
         assert!(nes.read_cpu_address(0x0201) == 0x03);
+    }
+
+    #[test]
+    fn read_from_cartridge() {
+        let mut nes = create_nes();
+        nes.load_rom("./test_files/nestest.nes");
+        let result = nes.read_cpu_address(0x4020);
+        assert!(result == 0x4C);
     }
 }

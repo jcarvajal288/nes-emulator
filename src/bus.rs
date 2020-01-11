@@ -44,8 +44,15 @@ impl Bus {
         } else if addr <= 0x3FFF { // ppu flags
             return self.read_from_ppu(addr & 0x0007);
         } else if addr >= 0x4020 { 
-            // program rom
-            return self.ram[usize::from(addr)];
+            // program rom (or cpu rom if no cartridge is loaded)
+            match self.cartridge.as_ref() {
+                Some(cart) => {
+                    return cart.read(addr);
+                }
+                None => {
+                    return self.ram[addr as usize];
+                }
+            }
         } else {
             return 0x00;
         }

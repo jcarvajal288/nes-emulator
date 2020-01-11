@@ -13,6 +13,15 @@ pub struct Cartridge {
     character_rom: Vec<u8>,
 }
 
+impl Cartridge {
+
+    pub fn read(&self, addr: u16) -> u8 {
+        // cartridge addressing range starts at cpu's 0x4020        
+        let cart_addr: u16 = addr - 0x4020;
+        return self.program_rom[cart_addr as usize];
+    }
+}
+
 struct Header {
     name: [u8; 4],
     prg_rom_chunks: u8, // in 16kb units
