@@ -3,12 +3,14 @@ use std::fs::File;
 use std::io::Read;
 use std::convert::TryInto;
 
+use super::mapper;
+
 const PROGRAM_ROM_CHUNK_SIZE: usize = 16384;
 const CHARACTER_ROM_CHUNK_SIZE: usize = 8192;
 
 pub struct Cartridge {
     header: Header,
-    mapper_id: u8,
+    mapper: Box<dyn mapper::Mapper>,
     program_rom: Vec<u8>,
     character_rom: Vec<u8>,
 }
@@ -18,7 +20,8 @@ impl Cartridge {
     pub fn read(&self, addr: u16) -> u8 {
         // cartridge addressing range starts at cpu's 0x4020        
         let cart_addr: u16 = addr - 0x4020;
-        return self.program_rom[cart_addr as usize];
+        let mapped_addr: u32 = self.mapper.map_address(cart_addr);
+        return self.program_rom[mapped_addr as usize];
     }
 }
 
@@ -45,6 +48,7 @@ pub fn create_cartridge_from_file(filename: &str) -> Option<Box<Cartridge>> {
     let header = read_header(&file_buffer);
     // the mapper id is (upper nybble of mapper2 | lower nybble of mapper1)
     let mapper_id = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
+    let mapper = mapper::create_mapper(mapper_id, header.prg_rom_chunks, header.chr_rom_chunks);
 
     let has_trainer_block = header.mapper1 & 0x04 > 1;
     let prg_starting_index = if has_trainer_block { 528 } else { 16 };
@@ -65,12 +69,12 @@ pub fn create_cartridge_from_file(filename: &str) -> Option<Box<Cartridge>> {
             character_rom = file_buffer[prg_ending_index..chr_ending_index].try_into().unwrap();
         }
         2 => { /* placeholder */ }
-        _ => { panic!("ERROR: Unrecognized file type in rom read.")}
+        _ => { panic!("ERROR: Unrecognized file type '{}' in create_cartridge_from_file().", file_type)}
     }
 
     return Some(Box::new(Cartridge {
         header: header,
-        mapper_id: mapper_id,
+        mapper: mapper,
         program_rom: program_rom,
         character_rom: character_rom,
     }))
