@@ -78,7 +78,7 @@ mod tests {
         assert!(result == 0x4C);
     }
 
-    //#[test]
+    #[test]
     fn run_nestest_regular_opcodes() {
         let mut nes = create_nes();
         nes.load_rom("./test_files/nestest.nes");

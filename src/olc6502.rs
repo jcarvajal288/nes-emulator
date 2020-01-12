@@ -394,7 +394,7 @@ fn IZY(o: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
     let hi: u16 = u16::from(o.read((t + 1) & 0x00FF));
     
     o.addr_abs = (hi << 8) | lo;
-    o.addr_abs += u16::from(o.y_reg);
+    o.addr_abs = u16::wrapping_add(o.addr_abs, o.y_reg as u16);
 
     if (o.addr_abs & 0xFF00) != (hi << 8) {
         return 1;
@@ -1173,13 +1173,13 @@ mod tests {
     #[allow(non_snake_case)]
     fn am_IZY() {
         let mut o: Olc6502 = create_olc6502();
-        o.y_reg = 0x10;
+        o.y_reg = 0x01;
         o.prog_ctr = 0x24;
         o.bus.write(0x24, 0x86);
-        o.bus.write(0x86, 0x28);
-        o.bus.write(0x87, 0x40);
+        o.bus.write(0x86, 0xFF);
+        o.bus.write(0x87, 0xFF);
         IZY(&mut o);
-        assert!(o.addr_abs == 0x4038);
+        assert!(o.addr_abs == 0x0000);
     }
     // endregion
 
