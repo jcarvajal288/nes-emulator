@@ -610,7 +610,7 @@ fn CPY(o: &mut Olc6502) -> u8 { // Compare Memory And Index Y
 #[allow(non_snake_case)]
 fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
     let data = o.fetch();
-    let result = data - 1;
+    let result = u8::wrapping_sub(data, 1);
     o.set_flag(Flags6502::N, (result & 0x80) > 1);
     o.set_flag(Flags6502::Z, result == 0x00);
     o.bus.write(o.addr_abs, result);
@@ -619,7 +619,7 @@ fn DEC(o: &mut Olc6502) -> u8 { // Decrement Memory by One
 
 #[allow(non_snake_case)]
 fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
-    o.x_reg -= 1;
+    o.x_reg = u8::wrapping_sub(o.x_reg, 1);
     o.set_flag(Flags6502::N, (o.x_reg & 0x80) > 1);
     o.set_flag(Flags6502::Z, o.x_reg == 0x00);
     return 0;
@@ -627,7 +627,7 @@ fn DEX(o: &mut Olc6502) -> u8 { // Decrement Index X by One
 
 #[allow(non_snake_case)]
 fn DEY(o: &mut Olc6502) -> u8 { // Decrement Index Y by One
-    o.y_reg -= 1;
+    o.y_reg = u8::wrapping_sub(o.y_reg, 1);
     o.set_flag(Flags6502::N, (o.y_reg & 0x80) > 1);
     o.set_flag(Flags6502::Z, o.y_reg == 0x00);
     return 0;
@@ -1870,7 +1870,6 @@ mod tests {
     #[allow(non_snake_case)]
     fn op_DEC_memory_zero() {
         let mut o: Olc6502 = create_olc6502();
-        o.addr_abs = 0x10;
         o.fetched_data = 0x01;
         DEC(&mut o);
         assert!(o.bus.read(o.addr_abs) == 0x0);
@@ -1882,10 +1881,20 @@ mod tests {
     #[allow(non_snake_case)]
     fn op_DEC_memory_negative() {
         let mut o: Olc6502 = create_olc6502();
-        o.addr_abs = 0x10;
         o.fetched_data = 0x8F;
         DEC(&mut o);
         assert!(o.bus.read(o.addr_abs) == 0x8E);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEC_underflow() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x00;
+        DEC(&mut o);
+        assert!(o.bus.read(o.addr_abs) == 0xFF);
         assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
     }
@@ -1910,6 +1919,17 @@ mod tests {
         assert!(o.x_reg == 0x0);
         assert!(o.get_flag(Flags6502::Z) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEX_underflow() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x00;
+        DEX(&mut o);
+        assert!(o.x_reg == 0xFF);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
@@ -1943,6 +1963,17 @@ mod tests {
         assert!(o.y_reg == 0x0);
         assert!(o.get_flag(Flags6502::Z) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_DEY_underflow() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x00;
+        DEY(&mut o);
+        assert!(o.y_reg == 0xFF);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
