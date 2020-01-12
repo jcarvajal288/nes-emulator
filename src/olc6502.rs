@@ -301,7 +301,8 @@ fn ZP0(o: &mut Olc6502) -> u8 { // Zero Page Addressing
 
 #[allow(non_snake_case)]
 fn ZPX(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
-    o.addr_abs = u16::from(o.read(o.prog_ctr) + o.x_reg);
+    let fetched_addr = u16::from(o.read(o.prog_ctr));
+    o.addr_abs = u16::wrapping_add(fetched_addr, o.x_reg as u16);
     o.prog_ctr += 1;
     o.addr_abs &= 0x00FF;
     return 0; 
@@ -309,7 +310,8 @@ fn ZPX(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing X
 
 #[allow(non_snake_case)]
 fn ZPY(o: &mut Olc6502) -> u8 { // Indexed Zero Page Addressing Y
-    o.addr_abs = u16::from(o.read(o.prog_ctr) + o.y_reg);
+    let fetched_addr = u16::from(o.read(o.prog_ctr));
+    o.addr_abs = u16::wrapping_add(fetched_addr, o.y_reg as u16);
     o.prog_ctr += 1;
     o.addr_abs &= 0x00FF;
     return 0; 
@@ -1065,6 +1067,30 @@ mod tests {
         o.prog_ctr = current_addr;
         ZP0(&mut o);
         assert!(o.addr_abs == 0x32);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_ZPX_with_overflow() {
+        let mut o: Olc6502 = create_olc6502();
+        let current_addr: u16 = 0x1000;
+        o.x_reg = 0x60;
+        o.bus.write(current_addr, 0xC0);
+        o.prog_ctr = current_addr;
+        ZPX(&mut o);
+        assert!(o.addr_abs == 0x0020);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_ZPY_with_overflow() {
+        let mut o: Olc6502 = create_olc6502();
+        let current_addr: u16 = 0x1000;
+        o.y_reg = 0x60;
+        o.bus.write(current_addr, 0xC0);
+        o.prog_ctr = current_addr;
+        ZPY(&mut o);
+        assert!(o.addr_abs == 0x0020);
     }
 
     #[test]

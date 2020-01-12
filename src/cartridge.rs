@@ -18,9 +18,8 @@ pub struct Cartridge {
 impl Cartridge {
 
     pub fn read(&self, addr: u16) -> u8 {
-        // cartridge addressing range starts at cpu's 0x4020        
-        let cart_addr: u16 = addr - 0x4020;
-        let mapped_addr: u32 = self.mapper.map_address(cart_addr);
+        let mapped_addr: u32 = self.mapper.map_address(addr);
+        println!("Input addr: {}; Mapped addr: {}", addr, mapped_addr);
         return self.program_rom[mapped_addr as usize];
     }
 }

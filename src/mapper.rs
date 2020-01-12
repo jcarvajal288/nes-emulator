@@ -14,14 +14,10 @@ pub struct NROM {
 impl Mapper for NROM {
 
     fn map_address(&self, input_addr: u16) -> u32 {
-        if input_addr >= 0x8000 {
-            if self.num_prg_banks > 1 {
-                return (input_addr & 0x7FFF) as u32;
-            } else {
-                return (input_addr & 0x3FFF) as u32;
-            }
+        if self.num_prg_banks > 1 {
+            return (input_addr & 0x7FFF) as u32;
         } else {
-            return input_addr as u32;
+            return (input_addr & 0x3FFF) as u32;
         }
     }
 }
@@ -54,10 +50,10 @@ mod tests {
             assert!(nrom.map_address(0x1000) == 0x1000);
             assert!(nrom.map_address(0x2000) == 0x2000);
             assert!(nrom.map_address(0x3000) == 0x3000);
-            assert!(nrom.map_address(0x4000) == 0x4000);
-            assert!(nrom.map_address(0x5000) == 0x5000);
-            assert!(nrom.map_address(0x6000) == 0x6000);
-            assert!(nrom.map_address(0x7000) == 0x7000);
+            assert!(nrom.map_address(0x4000) == 0x0000);
+            assert!(nrom.map_address(0x5000) == 0x1000);
+            assert!(nrom.map_address(0x6000) == 0x2000);
+            assert!(nrom.map_address(0x7000) == 0x3000);
             assert!(nrom.map_address(0x8000) == 0x0000);
             assert!(nrom.map_address(0x9000) == 0x1000);
             assert!(nrom.map_address(0xA000) == 0x2000);
