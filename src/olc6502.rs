@@ -31,6 +31,8 @@ pub struct Olc6502 {
     cycles: u8,
 
     lookup: [Instruction; 256],
+
+    program_complete: bool,
 }
 
 impl PartialEq for Olc6502 {
@@ -102,6 +104,10 @@ impl Olc6502 {
     fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.prog_ctr);
+            if self.lookup[self.opcode as usize].name == "BRK" && self.stack_ptr == 0 {
+                self.program_complete = true;
+                return;
+            }             
             //println!("{}", self.lookup[self.opcode as usize].name);
             self.prog_ctr += 1;
 
@@ -130,7 +136,17 @@ impl Olc6502 {
         self.bus.write(0xFFFC, 0x00);
         self.bus.write(0xFFFD, 0x80);
         self.reset();
-        while self.lookup[self.opcode as usize].name != "NOP" {
+        while self.program_complete == false {
+            self.clock();
+        }
+    }
+
+    pub fn run_automation(&mut self) {
+        // set reset vector
+        self.bus.write(0xFFFC, 0x00);
+        self.bus.write(0xFFFD, 0xC0);
+        self.reset();
+        while self.program_complete == false{
             self.clock();
         }
     }
@@ -209,6 +225,7 @@ pub fn create_olc6502() -> Olc6502 {
         opcode: 0,
         cycles: 0,
         lookup: populate_lookup_table(),
+        program_complete: false,
     };
     o.reset();
     return o;
