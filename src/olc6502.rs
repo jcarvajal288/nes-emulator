@@ -344,7 +344,7 @@ fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
     o.prog_ctr += 1;
 
     o.addr_abs = (hi << 8) | lo;
-    o.addr_abs += u16::from(o.y_reg);
+    o.addr_abs = u16::wrapping_add(o.addr_abs, o.y_reg as u16);
 
     if (o.addr_abs & 0xFF00) != (hi << 8) {
         return 1;
@@ -1144,6 +1144,19 @@ mod tests {
         o.prog_ctr = current_addr;
         ABY(&mut o);
         assert!(o.addr_abs == 0x4036);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn am_ABY_overflow() {
+        let mut o: Olc6502 = create_olc6502();
+        let current_addr: u16 = 0x1000;
+        o.y_reg = 0x01;
+        o.bus.write(current_addr, 0xFF);
+        o.bus.write(current_addr+1, 0xFF);
+        o.prog_ctr = current_addr;
+        ABY(&mut o);
+        assert!(o.addr_abs == 0x0000);
     }
 
     #[test]
