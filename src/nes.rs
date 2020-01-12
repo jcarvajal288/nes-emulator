@@ -77,4 +77,16 @@ mod tests {
         let result = nes.read_cpu_address(0x4020);
         assert!(result == 0x4C);
     }
+
+    #[test]
+    fn run_nestest_regular_opcodes() {
+        let mut nes = create_nes();
+        nes.load_rom("./test_files/nestest.nes");
+        nes.ppu.cpu.run_automation();
+        let result = nes.read_cpu_address(0x02);
+        if result != 0x00 {
+            println!("Failure code: {}", result);
+        }
+        assert!(result == 0x00);
+    }
 }

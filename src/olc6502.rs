@@ -108,7 +108,7 @@ impl Olc6502 {
                 self.program_complete = true;
                 return;
             }             
-            //println!("{}", self.lookup[self.opcode as usize].name);
+            println!("{}", self.lookup[self.opcode as usize].name);
             self.prog_ctr += 1;
 
             // Get starting number of cycles
@@ -143,9 +143,8 @@ impl Olc6502 {
 
     pub fn run_automation(&mut self) {
         // set reset vector
-        self.bus.write(0xFFFC, 0x00);
-        self.bus.write(0xFFFD, 0xC0);
         self.reset();
+        self.prog_ctr = 0xC000;
         while self.program_complete == false{
             self.clock();
         }
