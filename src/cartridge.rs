@@ -19,7 +19,7 @@ impl Cartridge {
 
     pub fn read(&self, addr: u16) -> u8 {
         let mapped_addr: u32 = self.mapper.map_address(addr);
-        println!("Input addr: {}; Mapped addr: {}", addr, mapped_addr);
+        //println!("Input addr: {}; Mapped addr: {}", addr, mapped_addr);
         return self.program_rom[mapped_addr as usize];
     }
 }

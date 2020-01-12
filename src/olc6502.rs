@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+extern crate hex;
+
 use super::bus;
 
 static STACK_BASE: u16 = 0x0100;
@@ -63,7 +65,7 @@ impl Olc6502 {
         self.accumulator = 0;
         self.x_reg = 0;
         self.y_reg = 0;
-        self.stack_ptr = 0xFF;
+        self.stack_ptr = 0xFD;
         self.prog_ctr = (hi << 8) | lo;
         self.status_reg = 0;
 
@@ -104,15 +106,20 @@ impl Olc6502 {
     fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.prog_ctr);
-            if self.lookup[self.opcode as usize].name == "BRK" && self.stack_ptr == 0 {
+            let op_index = usize::from(self.opcode);
+            if self.lookup[op_index].name == "BRK" && self.stack_ptr == 0 {
                 self.program_complete = true;
                 return;
             }             
-            println!("{}", self.lookup[self.opcode as usize].name);
+            if self.lookup[op_index].name == "???" {
+                println!("Invalid opcode: {:2X}.  Ending program.", op_index);
+                self.program_complete = true;
+                return;
+            }
+            self.log_state();
             self.prog_ctr += 1;
 
             // Get starting number of cycles
-            let op_index = usize::from(self.opcode);
             self.cycles = self.lookup[op_index].cycles;
 
             // execute next instruction
@@ -124,6 +131,26 @@ impl Olc6502 {
         }
 
         self.cycles -= 1;
+    }
+
+    fn log_state(&self) {
+        let instr = &self.lookup[self.opcode as usize];
+        let op = &instr.name;
+        let mut args = ["  "; 2];
+        let arg0 = format!("{:02X}", self.bus.read(self.prog_ctr + 1));
+        let arg1 = format!("{:02X}", self.bus.read(self.prog_ctr + 2));
+        if instr.num_bytes >= 2 {
+            args[0] = &arg0;
+        } 
+        if instr.num_bytes == 3 {
+            args[1] = &arg1;
+        }
+        let prog_ctr = format!("{:04X}", self.prog_ctr);
+        let accumulator = format!("{:02X}", self.accumulator);
+        let x_reg = format!("{:02X}", self.x_reg);
+        let y_reg = format!("{:02X}", self.y_reg);
+        let stack_ptr = format!("{:02X}", self.stack_ptr);
+        println!("{} {} {} {}\t\tA:{} X:{} Y:{} SP:{}", prog_ctr, op, args[0], args[1], accumulator, x_reg, y_reg, stack_ptr);
     }
 
     pub fn load_program(&mut self, program: String) {
@@ -184,11 +211,12 @@ impl Olc6502 {
     fn push_to_stack(&mut self, data: u8) {
         let current_stack_location = STACK_BASE | self.stack_ptr as u16;
         self.bus.write(current_stack_location, data);
-        self.stack_ptr -= 1;
+        self.stack_ptr = u8::wrapping_sub(self.stack_ptr, 1);
     }
 
     fn pop_from_stack(&mut self) -> u8 {
-        self.stack_ptr += 1;
+        // XXX - stack pointer overflow might be a bug?
+        self.stack_ptr = u8::wrapping_add(self.stack_ptr, 1);
         let current_stack_location = STACK_BASE | self.stack_ptr as u16;
         return self.bus.read(current_stack_location);
     }
@@ -234,31 +262,32 @@ struct Instruction {
     name: String,
     operate: fn(&mut Olc6502) -> u8,
     addrmode: fn(&mut Olc6502) -> u8,
+    num_bytes: u8,
     cycles: u8,
 }
 
 fn populate_lookup_table() -> [Instruction; 256] {
-    fn i(name: &str, operate: fn(&mut Olc6502) -> u8, addrmode: fn(&mut Olc6502) -> u8, cycles: u8) -> Instruction {
-        return Instruction { name: String::from(name), operate, addrmode, cycles };
+    fn i(name: &str, operate: fn(&mut Olc6502) -> u8, addrmode: fn(&mut Olc6502) -> u8, num_bytes: u8, cycles: u8) -> Instruction {
+        return Instruction { name: String::from(name), operate, addrmode, num_bytes, cycles };
     }
 
     return [
-        i("BRK", BRK, IMP, 7), i("ORA", ORA, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ORA", ORA, ZP0, 3), i("ASL", ASL, ZP0, 5), i("???", XXX, IMP, 2), i("PHP", PHP, IMP, 3), i("ORA", ORA, IMM, 2), i("ASL", ASL, ACC, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ORA", ORA, ABS, 4), i("ASL", ASL, ABS, 6), i("???", XXX, IMP, 2),
-        i("BPL", BPL, REL, 2), i("ORA", ORA, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ORA", ORA, ZPX, 4), i("ASL", ASL, ZPX, 6), i("???", XXX, IMP, 2), i("CLC", CLC, IMP, 2), i("ORA", ORA, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ORA", ORA, ABX, 4), i("ASL", ASL, ABX, 7), i("???", XXX, IMP, 2), 
-        i("JSR", JSR, ABS, 6), i("AND", AND, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("BIT", BIT, ZP0, 3), i("AND", AND, ZP0, 3), i("ROL", ROL, ZP0, 5), i("???", XXX, IMP, 2), i("PLP", PLP, IMP, 4), i("AND", AND, IMM, 2), i("ROL", ROL, ACC, 2), i("???", XXX, IMP, 2), i("BIT", BIT, ABS, 4), i("AND", AND, ABS, 4), i("ROL", ROL, ABS, 6), i("???", XXX, IMP, 2), 
-        i("BMI", BMI, REL, 2), i("AND", AND, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("AND", AND, ZPX, 4), i("ROL", ROL, ZPX, 6), i("???", XXX, IMP, 2), i("SEC", SEC, IMP, 2), i("AND", AND, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("AND", AND, ABX, 4), i("ROL", ROL, ABX, 7), i("???", XXX, IMP, 2), 
-        i("RTI", RTI, IMP, 6), i("EOR", EOR, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("EOR", EOR, ZP0, 3), i("LSR", LSR, ZP0, 5), i("???", XXX, IMP, 2), i("PHA", PHA, IMP, 3), i("EOR", EOR, IMM, 2), i("LSR", LSR, ACC, 2), i("???", XXX, IMP, 2), i("JMP", JMP, ABS, 3), i("EOR", EOR, ABS, 4), i("LSR", LSR, ABS, 6), i("???", XXX, IMP, 2), 
-        i("BVC", BVC, REL, 2), i("EOR", EOR, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("EOR", EOR, ZPX, 4), i("LSR", LSR, ZPX, 6), i("???", XXX, IMP, 2), i("CLI", CLI, IMP, 2), i("EOR", EOR, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("EOR", EOR, ABX, 4), i("LSR", LSR, ABX, 7), i("???", XXX, IMP, 2), 
-        i("RTS", RTS, IMP, 6), i("ADC", ADC, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ADC", ADC, ZP0, 3), i("ROR", ROR, ZP0, 5), i("???", XXX, IMP, 2), i("PLA", PLA, IMP, 4), i("ADC", ADC, IMM, 2), i("ROR", ROR, ACC, 2), i("???", XXX, IMP, 2), i("JMP", JMP, IND, 5), i("ADC", ADC, ABS, 4), i("ROR", ROR, ABS, 6), i("???", XXX, IMP, 2), 
-        i("BVS", BVS, REL, 2), i("ADC", ADC, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ADC", ADC, ZPX, 4), i("ROR", ROR, ZPX, 6), i("???", XXX, IMP, 2), i("SEI", SEI, IMP, 2), i("ADC", ADC, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("ADC", ADC, ABX, 4), i("ROR", ROR, ABX, 7), i("???", XXX, IMP, 2), 
-        i("???", XXX, IMP, 2), i("STA", STA, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("STY", STY, ZP0, 3), i("STA", STA, ZP0, 3), i("STX", STX, ZP0, 3), i("???", XXX, IMP, 2), i("DEY", DEY, IMP, 2), i("???", XXX, IMP, 2), i("TXA", TXA, IMP, 2), i("???", XXX, IMP, 2), i("STY", STY, ABS, 4), i("STA", STA, ABS, 4), i("STX", STX, ABS, 4), i("???", XXX, IMP, 2), 
-        i("BCC", BCC, REL, 2), i("STA", STA, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("STY", STY, ZPX, 4), i("STA", STA, ZPX, 4), i("STX", STX, ZPY, 4), i("???", XXX, IMP, 2), i("TYA", TYA, IMP, 2), i("STA", STA, ABY, 5), i("TXS", TXS, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("STA", STA, ABX, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), 
-        i("LDY", LDY, IMM, 2), i("LDA", LDA, IZX, 6), i("LDX", LDX, IMM, 2), i("???", XXX, IMP, 2), i("LDY", LDY, ZP0, 3), i("LDA", LDA, ZP0, 3), i("LDX", LDX, ZP0, 3), i("???", XXX, IMP, 2), i("TAY", TAY, IMP, 2), i("LDA", LDA, IMM, 2), i("TAX", TAX, IMP, 2), i("???", XXX, IMP, 2), i("LDY", LDY, ABS, 4), i("LDA", LDA, ABS, 4), i("LDX", LDX, ABS, 4), i("???", XXX, IMP, 2), 
-        i("BCS", BCS, REL, 2), i("LDA", LDA, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("LDY", LDY, ZPX, 4), i("LDA", LDA, ZPX, 4), i("LDX", LDX, ZPY, 4), i("???", XXX, IMP, 2), i("CLV", CLV, IMP, 2), i("LDA", LDA, ABY, 4), i("TSX", TSX, IMP, 2), i("???", XXX, IMP, 2), i("LDY", LDY, ABX, 4), i("LDA", LDA, ABX, 4), i("LDX", LDX, ABY, 4), i("???", XXX, IMP, 2), 
-        i("CPY", CPY, IMM, 2), i("CMP", CMP, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("CPY", CPY, ZP0, 3), i("CMP", CMP, ZP0, 3), i("DEC", DEC, ZP0, 5), i("???", XXX, IMP, 2), i("INY", INY, IMP, 2), i("CMP", CMP, IMM, 2), i("DEX", DEX, IMP, 2), i("???", XXX, IMP, 2), i("CPY", CPY, ABS, 4), i("CMP", CMP, ABS, 4), i("DEC", DEC, ABS, 6), i("???", XXX, IMP, 2), 
-        i("BNE", BNE, REL, 2), i("CMP", CMP, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("CMP", CMP, ZPX, 4), i("DEC", DEC, ZPX, 6), i("???", XXX, IMP, 2), i("CLD", CLD, IMP, 2), i("CMP", CMP, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("CMP", CMP, ABX, 4), i("DEC", DEC, ABX, 7), i("???", XXX, IMP, 2), 
-        i("CPX", CPX, IMM, 2), i("SBC", SBC, IZX, 6), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("CPX", CPX, ZP0, 3), i("SBC", SBC, ZP0, 3), i("INC", INC, ZP0, 5), i("???", XXX, IMP, 2), i("INX", INX, IMP, 2), i("SBC", SBC, IMM, 2), i("NOP", NOP, IMP, 2), i("???", XXX, IMP, 2), i("CPX", CPX, ABS, 4), i("SBC", SBC, ABS, 4), i("INC", INC, ABS, 6), i("???", XXX, IMP, 2), 
-        i("BEQ", BEQ, REL, 2), i("SBC", SBC, IZY, 5), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("SBC", SBC, ZPX, 4), i("INC", INC, ZPX, 6), i("???", XXX, IMP, 2), i("SED", SED, IMP, 2), i("SBC", SBC, ABY, 4), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("???", XXX, IMP, 2), i("SBC", SBC, ABX, 4), i("INC", INC, ABX, 7), i("???", XXX, IMP, 2), 
+        i("BRK", BRK, IMP, 1, 7), i("ORA", ORA, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ORA", ORA, ZP0, 2, 3), i("ASL", ASL, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("PHP", PHP, IMP, 1, 3), i("ORA", ORA, IMM, 2, 2), i("ASL", ASL, ACC, 1, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ORA", ORA, ABS, 3, 4), i("ASL", ASL, ABS, 3, 6), i("???", XXX, IMP, 0, 2),
+        i("BPL", BPL, REL, 2, 2), i("ORA", ORA, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ORA", ORA, ZPX, 2, 4), i("ASL", ASL, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("CLC", CLC, IMP, 1, 2), i("ORA", ORA, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ORA", ORA, ABX, 3, 4), i("ASL", ASL, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
+        i("JSR", JSR, ABS, 3, 6), i("AND", AND, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("BIT", BIT, ZP0, 2, 3), i("AND", AND, ZP0, 2, 3), i("ROL", ROL, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("PLP", PLP, IMP, 1, 4), i("AND", AND, IMM, 2, 2), i("ROL", ROL, ACC, 1, 2), i("???", XXX, IMP, 0, 2), i("BIT", BIT, ABS, 3, 4), i("AND", AND, ABS, 3, 4), i("ROL", ROL, ABS, 3, 6), i("???", XXX, IMP, 0, 2), 
+        i("BMI", BMI, REL, 2, 2), i("AND", AND, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("AND", AND, ZPX, 2, 4), i("ROL", ROL, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("SEC", SEC, IMP, 1, 2), i("AND", AND, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("AND", AND, ABX, 3, 4), i("ROL", ROL, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
+        i("RTI", RTI, IMP, 1, 6), i("EOR", EOR, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("EOR", EOR, ZP0, 2, 3), i("LSR", LSR, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("PHA", PHA, IMP, 1, 3), i("EOR", EOR, IMM, 2, 2), i("LSR", LSR, ACC, 1, 2), i("???", XXX, IMP, 0, 2), i("JMP", JMP, ABS, 3, 3), i("EOR", EOR, ABS, 3, 4), i("LSR", LSR, ABS, 3, 6), i("???", XXX, IMP, 0, 2), 
+        i("BVC", BVC, REL, 2, 2), i("EOR", EOR, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("EOR", EOR, ZPX, 2, 4), i("LSR", LSR, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("CLI", CLI, IMP, 1, 2), i("EOR", EOR, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("EOR", EOR, ABX, 3, 4), i("LSR", LSR, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
+        i("RTS", RTS, IMP, 1, 6), i("ADC", ADC, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ADC", ADC, ZP0, 2, 3), i("ROR", ROR, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("PLA", PLA, IMP, 1, 4), i("ADC", ADC, IMM, 2, 2), i("ROR", ROR, ACC, 1, 2), i("???", XXX, IMP, 0, 2), i("JMP", JMP, IND, 3, 5), i("ADC", ADC, ABS, 3, 4), i("ROR", ROR, ABS, 3, 6), i("???", XXX, IMP, 0, 2), 
+        i("BVS", BVS, REL, 2, 2), i("ADC", ADC, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ADC", ADC, ZPX, 2, 4), i("ROR", ROR, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("SEI", SEI, IMP, 1, 2), i("ADC", ADC, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("ADC", ADC, ABX, 3, 4), i("ROR", ROR, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
+        i("???", XXX, IMP, 0, 2), i("STA", STA, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("STY", STY, ZP0, 2, 3), i("STA", STA, ZP0, 2, 3), i("STX", STX, ZP0, 2, 3), i("???", XXX, IMP, 0, 2), i("DEY", DEY, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("TXA", TXA, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("STY", STY, ABS, 3, 4), i("STA", STA, ABS, 3, 4), i("STX", STX, ABS, 3, 4), i("???", XXX, IMP, 0, 2), 
+        i("BCC", BCC, REL, 2, 2), i("STA", STA, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("STY", STY, ZPX, 2, 4), i("STA", STA, ZPX, 2, 4), i("STX", STX, ZPY, 2, 4), i("???", XXX, IMP, 0, 2), i("TYA", TYA, IMP, 1, 2), i("STA", STA, ABY, 3, 5), i("TXS", TXS, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("STA", STA, ABX, 3, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), 
+        i("LDY", LDY, IMM, 2, 2), i("LDA", LDA, IZX, 2, 6), i("LDX", LDX, IMM, 2, 2), i("???", XXX, IMP, 0, 2), i("LDY", LDY, ZP0, 2, 3), i("LDA", LDA, ZP0, 2, 3), i("LDX", LDX, ZP0, 2, 3), i("???", XXX, IMP, 0, 2), i("TAY", TAY, IMP, 1, 2), i("LDA", LDA, IMM, 2, 2), i("TAX", TAX, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("LDY", LDY, ABS, 3, 4), i("LDA", LDA, ABS, 3, 4), i("LDX", LDX, ABS, 3, 4), i("???", XXX, IMP, 0, 2), 
+        i("BCS", BCS, REL, 2, 2), i("LDA", LDA, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("LDY", LDY, ZPX, 2, 4), i("LDA", LDA, ZPX, 2, 4), i("LDX", LDX, ZPY, 2, 4), i("???", XXX, IMP, 0, 2), i("CLV", CLV, IMP, 1, 2), i("LDA", LDA, ABY, 3, 4), i("TSX", TSX, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("LDY", LDY, ABX, 3, 4), i("LDA", LDA, ABX, 3, 4), i("LDX", LDX, ABY, 3, 4), i("???", XXX, IMP, 0, 2), 
+        i("CPY", CPY, IMM, 2, 2), i("CMP", CMP, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("CPY", CPY, ZP0, 2, 3), i("CMP", CMP, ZP0, 2, 3), i("DEC", DEC, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("INY", INY, IMP, 1, 2), i("CMP", CMP, IMM, 2, 2), i("DEX", DEX, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("CPY", CPY, ABS, 3, 4), i("CMP", CMP, ABS, 3, 4), i("DEC", DEC, ABS, 3, 6), i("???", XXX, IMP, 0, 2), 
+        i("BNE", BNE, REL, 2, 2), i("CMP", CMP, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("CMP", CMP, ZPX, 2, 4), i("DEC", DEC, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("CLD", CLD, IMP, 1, 2), i("CMP", CMP, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("CMP", CMP, ABX, 3, 4), i("DEC", DEC, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
+        i("CPX", CPX, IMM, 2, 2), i("SBC", SBC, IZX, 2, 6), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("CPX", CPX, ZP0, 2, 3), i("SBC", SBC, ZP0, 2, 3), i("INC", INC, ZP0, 2, 5), i("???", XXX, IMP, 0, 2), i("INX", INX, IMP, 1, 2), i("SBC", SBC, IMM, 2, 2), i("NOP", NOP, IMP, 1, 2), i("???", XXX, IMP, 0, 2), i("CPX", CPX, ABS, 3, 4), i("SBC", SBC, ABS, 3, 4), i("INC", INC, ABS, 3, 6), i("???", XXX, IMP, 0, 2), 
+        i("BEQ", BEQ, REL, 2, 2), i("SBC", SBC, IZY, 2, 5), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("SBC", SBC, ZPX, 2, 4), i("INC", INC, ZPX, 2, 6), i("???", XXX, IMP, 0, 2), i("SED", SED, IMP, 1, 2), i("SBC", SBC, ABY, 3, 4), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("???", XXX, IMP, 0, 2), i("SBC", SBC, ABX, 3, 4), i("INC", INC, ABX, 3, 7), i("???", XXX, IMP, 0, 2), 
     ];
 
 }
@@ -962,9 +991,9 @@ mod tests {
         let old_status = o.status_reg;
         let old_stack = o.stack_top();
         o.irq();
-        assert!(o.bus.read(0x01FF) == 0x11);
-        assert!(o.bus.read(0x01FE) == 0xEC);
-        assert!(o.bus.read(0x01FD) == 0x28);
+        assert!(o.bus.read(0x01FD) == 0x11);
+        assert!(o.bus.read(0x01FC) == 0xEC);
+        assert!(o.bus.read(0x01FB) == 0x28);
         assert!(o.prog_ctr == 0xDEAD);
         assert!(o.get_flag(Flags6502::I) == 1);
         assert!(o.get_flag(Flags6502::B) == 0);

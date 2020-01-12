@@ -33,6 +33,10 @@ impl Nes {
     fn read_cpu_address(self, addr: u16) -> u8 {
         return self.ppu.cpu.bus.read(addr);
     }
+
+    fn write_cpu_address(&mut self, addr: u16, data: u8) {
+        self.ppu.cpu.bus.write(addr, data);
+    }
 }
 
 pub fn create_nes() -> Nes {
@@ -78,10 +82,11 @@ mod tests {
         assert!(result == 0x4C);
     }
 
-    //#[test]
-    fn run_nestest_regular_opcodes() {
+    #[test]
+    fn nestest_regular_opcodes() {
         let mut nes = create_nes();
         nes.load_rom("./test_files/nestest.nes");
+        nes.write_cpu_address(0x02, 0xFF);
         nes.ppu.cpu.run_automation();
         let result = nes.read_cpu_address(0x02);
         if result != 0x00 {
