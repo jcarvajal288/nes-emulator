@@ -474,10 +474,10 @@ fn add(o: &mut Olc6502, data16: u16) {
     let a: u16 = o.accumulator as u16;
     let flag_c: u16 = o.get_flag(Flags6502::C) as u16;
     let sum: u16 = a + data16 + flag_c;
-    o.set_flag(Flags6502::C, sum > 0xFF);
+    o.set_flag(Flags6502::C, sum & 0xFF00 > 0);
     o.set_flag(Flags6502::Z, (sum & 0x00FF) == 0);
     o.set_flag(Flags6502::N, (sum & 0x80) > 0);
-    o.set_flag(Flags6502::V, ((!(a ^ data16) & (a ^ sum)) & 0x0080) > 0);
+    o.set_flag(Flags6502::V, !((a ^ data16) & 0x80 > 0) && ((a ^ sum) & 0x80) > 0);
     o.accumulator = (sum & 0x00FF) as u8;
 }
 
@@ -1355,9 +1355,9 @@ mod tests {
     fn op_ADC_pos_neg_neg() {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x04;
-        o.fetched_data = 0x90;
+        o.fetched_data = 0xF0;
         ADC(&mut o);
-        assert!(o.accumulator == 0x94);
+        assert!(o.accumulator == 0xF4);
         assert!(o.get_flag(Flags6502::V) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
         assert!(o.get_flag(Flags6502::C) == 0);
@@ -1396,10 +1396,10 @@ mod tests {
     #[allow(non_snake_case)]
     fn op_ADC_neg_neg_pos() {
         let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0x88;
-        o.fetched_data = 0x88;
+        o.accumulator = 0xD0;
+        o.fetched_data = 0x90;
         ADC(&mut o);
-        assert!(o.accumulator == 0x10);
+        assert!(o.accumulator == 0x60);
         assert!(o.get_flag(Flags6502::V) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::C) == 1);
@@ -2234,7 +2234,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_SBC() {
+    fn op_SBC_positive() {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x14;
         o.fetched_data = 0x04;
@@ -2243,6 +2243,34 @@ mod tests {
         assert!(o.get_flag(Flags6502::V) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SBC_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x14;
+        o.fetched_data = 0x14;
+        SBC(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SBC_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x14;
+        o.fetched_data = 0x15;
+        SBC(&mut o);
+        assert!(o.accumulator == 0xFF);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
     }
 
