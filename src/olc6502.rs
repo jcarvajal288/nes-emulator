@@ -792,6 +792,8 @@ fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
 #[allow(non_snake_case)]
 fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
     o.accumulator = o.pop_from_stack();
+    o.set_flag(Flags6502::Z, o.accumulator == 0);
+    o.set_flag(Flags6502::N, o.accumulator & 0x80 >= 1);
     return 0;
 }
 
@@ -2306,7 +2308,7 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_PLA() {
+    fn op_PLA_positive() {
         let mut o: Olc6502 = create_olc6502();
         let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
         o.bus.write(stack_end, 0x14);
@@ -2314,6 +2316,36 @@ mod tests {
         PLA(&mut o);
         assert!(o.accumulator == 0x14);
         assert!(o.stack_ptr == stack_end as u8);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLA_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.bus.write(stack_end, 0x00);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLA(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.stack_ptr == stack_end as u8);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLA_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.bus.write(stack_end, 0xF0);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLA(&mut o);
+        assert!(o.accumulator == 0xF0);
+        assert!(o.stack_ptr == stack_end as u8);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
