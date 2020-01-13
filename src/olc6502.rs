@@ -543,8 +543,8 @@ fn BIT(o: &mut Olc6502) -> u8 { // Test Bits in Memory with Accumulator
     let fetched = o.fetch();
     let data = o.accumulator & fetched;
     o.set_flag(Flags6502::Z, data == 0);
-    o.set_flag(Flags6502::N, fetched & (1 << 7) == 1);
-    o.set_flag(Flags6502::V, fetched & (1 << 6) == 1);
+    o.set_flag(Flags6502::N, fetched & (1 << 7) >= 1);
+    o.set_flag(Flags6502::V, fetched & (1 << 6) >= 1);
     return 0;
 }
 
@@ -1548,6 +1548,18 @@ mod tests {
         assert!(o.get_flag(Flags6502::Z) == 1);
         assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.get_flag(Flags6502::V) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_BIT_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0xF0;
+        o.fetched_data = 0xFF;
+        BIT(&mut o);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::V) == 1);
     }
 
     #[test]
