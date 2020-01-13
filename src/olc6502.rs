@@ -1879,6 +1879,18 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
+    fn op_CMP_LT() {
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x70;
+        o.fetched_data = 0x81;
+        CMP(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
     fn op_CPX_GT() {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x81;
