@@ -1308,30 +1308,6 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
-    fn op_ADD_zero() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0xFF;
-        o.fetched_data = 0x00;
-        AND(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
-    fn op_ADD_negative_result() {
-        let mut o: Olc6502 = create_olc6502();
-        o.accumulator = 0xFF;
-        o.fetched_data = 0xF0;
-        AND(&mut o);
-        assert!(o.accumulator == 0xF0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-    }
-
-    #[test]
-    #[allow(non_snake_case)]
     fn op_ADC_pos_pos_pos() {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x04;
