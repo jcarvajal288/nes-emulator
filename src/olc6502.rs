@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 extern crate hex;
 
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::LineWriter;
+
 use super::bus;
 
 static STACK_BASE: u16 = 0x0100;
@@ -35,6 +39,8 @@ pub struct Olc6502 {
     lookup: [Instruction; 256],
 
     program_complete: bool,
+
+    log_file: LineWriter<File>,
 }
 
 impl PartialEq for Olc6502 {
@@ -67,7 +73,7 @@ impl Olc6502 {
         self.y_reg = 0;
         self.stack_ptr = 0xFD;
         self.prog_ctr = (hi << 8) | lo;
-        self.status_reg = 0;
+        self.status_reg = 0x34;
 
         self.fetched_data = 0;
         self.addr_abs = 0;
@@ -133,7 +139,7 @@ impl Olc6502 {
         self.cycles -= 1;
     }
 
-    fn log_state(&self) {
+    fn log_state(&mut self) {
         let instr = &self.lookup[self.opcode as usize];
         let op = &instr.name;
         let mut args = ["  "; 2];
@@ -150,7 +156,9 @@ impl Olc6502 {
         let x_reg = format!("{:02X}", self.x_reg);
         let y_reg = format!("{:02X}", self.y_reg);
         let stack_ptr = format!("{:02X}", self.stack_ptr);
-        println!("{} {} {} {}\t\tA:{} X:{} Y:{} SP:{}", prog_ctr, op, args[0], args[1], accumulator, x_reg, y_reg, stack_ptr);
+        let status_reg = format!("{:02X}", self.status_reg);
+        let logline = format!("{} {} {} {}\t\tA:{} X:{} Y:{} P:{} SP:{}\n", prog_ctr, op, args[0], args[1], accumulator, x_reg, y_reg, status_reg, stack_ptr);
+        self.log_file.write_all(logline.as_bytes()).expect("Unable to write to log file");
     }
 
     pub fn load_program(&mut self, program: String) {
@@ -238,6 +246,7 @@ impl Olc6502 {
 }
 
 pub fn create_olc6502() -> Olc6502 {
+    let file = File::create("./log/log.txt").unwrap();
     let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
@@ -253,6 +262,7 @@ pub fn create_olc6502() -> Olc6502 {
         cycles: 0,
         lookup: populate_lookup_table(),
         program_complete: false,
+        log_file: LineWriter::new(file),
     };
     o.reset();
     return o;
@@ -716,18 +726,24 @@ fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
 #[allow(non_snake_case)]
 fn LDA(o: &mut Olc6502) -> u8 { // Load Accumulator with Memory
     o.accumulator = o.fetch();
+    o.set_flag(Flags6502::Z, o.accumulator == 0x00);
+    o.set_flag(Flags6502::N, (o.accumulator & 0x80) > 1);
     return 1;
 }
 
 #[allow(non_snake_case)]
 fn LDX(o: &mut Olc6502) -> u8 { // Load Index X with Memory
     o.x_reg = o.fetch();
+    o.set_flag(Flags6502::Z, o.x_reg == 0x00);
+    o.set_flag(Flags6502::N, (o.x_reg & 0x80) > 1);
     return 1;
 }
 
 #[allow(non_snake_case)]
 fn LDY(o: &mut Olc6502) -> u8 { // Load Index Y with Memory
     o.y_reg = o.fetch();
+    o.set_flag(Flags6502::Z, o.y_reg == 0x00);
+    o.set_flag(Flags6502::N, (o.y_reg & 0x80) > 1);
     return 1;
 }
 
@@ -2275,34 +2291,105 @@ mod tests {
         RTS(&mut o);
         assert!(o.prog_ctr == 0xDEAD);
     }
-
     #[test]
     #[allow(non_snake_case)]
     fn op_LDA() {
         let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x04;
+        LDA(&mut o);
+        assert!(o.accumulator == 0x04);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDA_negative() {
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDA(&mut o);
         assert!(o.accumulator == 0xFA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDA_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x00;
+        LDA(&mut o);
+        assert!(o.accumulator == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
     #[allow(non_snake_case)]
     fn op_LDX() {
         let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x04;
+        LDX(&mut o);
+        assert!(o.x_reg == 0x04);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDX_negative() {
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDX(&mut o);
         assert!(o.x_reg == 0xFA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDX_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x00;
+        LDX(&mut o);
+        assert!(o.x_reg == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
     #[allow(non_snake_case)]
     fn op_LDY() {
         let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x04;
+        LDY(&mut o);
+        assert!(o.y_reg == 0x04);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDY_negative() {
+        let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDY(&mut o);
         assert!(o.y_reg == 0xFA);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_LDY_zero() {
+        let mut o: Olc6502 = create_olc6502();
+        o.fetched_data = 0x00;
+        LDY(&mut o);
+        assert!(o.y_reg == 0x00);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
     #[test]
     #[allow(non_snake_case)]
     fn op_LSR_ACC() {
