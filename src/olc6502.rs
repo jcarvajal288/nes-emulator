@@ -1915,6 +1915,18 @@ mod tests {
 
     #[test]
     #[allow(non_snake_case)]
+    fn op_CPX_LT() {
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x70;
+        o.fetched_data = 0x80;
+        CPX(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
     fn op_CPY_GT() {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x81;
@@ -1934,6 +1946,18 @@ mod tests {
         CPY(&mut o);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CPY_LT() {
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x70;
+        o.fetched_data = 0x80;
+        CPY(&mut o);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
     }
 
