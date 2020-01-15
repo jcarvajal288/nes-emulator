@@ -49,6 +49,8 @@ pub fn create_nes() -> Nes {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::{prelude::*, BufReader};
 
     #[test]
     fn load_and_run_program() {
@@ -86,9 +88,28 @@ mod tests {
     fn nestest_regular_opcodes() {
         let mut nes = create_nes();
         nes.load_rom("./test_files/nestest.nes");
-        nes.write_cpu_address(0x02, 0xFF);
+        nes.write_cpu_address(0x02, 0x01);
         nes.ppu.cpu.run_automation();
         let result = nes.read_cpu_address(0x02);
+        
+        let our_file = File::open("./log/log.txt").unwrap();
+        let their_file = File::open("./test_files/nestest.log").unwrap();
+        let our_reader = BufReader::new(our_file);
+        let their_reader = BufReader::new(their_file);
+
+        let mut current_line = 1;
+        for (our_line_w, their_line_w) in our_reader.lines().zip(their_reader.lines()) {
+            let our_line = our_line_w.unwrap();
+            let their_line = their_line_w.unwrap();
+            let our_prog_ctr = our_line.split_whitespace().next().unwrap();
+            let their_prog_ctr = their_line.split_whitespace().next().unwrap();
+            if our_prog_ctr != their_prog_ctr {
+                println!("First different line: {}", current_line);
+                assert!(false);
+            }
+            current_line += 1;
+        }
+
         if result != 0x00 {
             println!("Failure code: {}", result);
         }

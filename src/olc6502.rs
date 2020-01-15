@@ -73,7 +73,7 @@ impl Olc6502 {
         self.y_reg = 0;
         self.stack_ptr = 0xFD;
         self.prog_ctr = (hi << 8) | lo;
-        self.status_reg = 0x34;
+        self.status_reg = 0x24;
 
         self.fetched_data = 0;
         self.addr_abs = 0;
