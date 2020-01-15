@@ -189,10 +189,17 @@ impl Olc6502 {
         return STACK_BASE | self.stack_ptr as u16;
     }
 
-    fn run_interrupt(&mut self, inter_addr: u16, cycles: u8) {
+    fn run_interrupt(&mut self, inter_addr: u16, cycles: u8, b_flag: bool) {
         self.push_to_stack((self.prog_ctr >> 8) as u8);
         self.push_to_stack(self.prog_ctr as u8);
-        self.push_to_stack(self.status_reg);
+        let mut sr_copy = self.status_reg;
+        if b_flag == true {
+            sr_copy |= 0x18; 
+        } else {
+            sr_copy |= 0x10; // turn on bit 5
+            sr_copy &= 0b1111_0111; // turn off bit 4
+        }
+        self.push_to_stack(sr_copy);
 
         self.set_flag(Flags6502::B, false);
         self.set_flag(Flags6502::U, true);
@@ -208,12 +215,12 @@ impl Olc6502 {
 
     fn irq(&mut self) {
         if self.get_flag(Flags6502::I) == 0 {
-            self.run_interrupt(0xFFFE, 7);
+            self.run_interrupt(0xFFFE, 7, false);
         }
      }
 
-    fn nmi(&mut self) {
-        self.run_interrupt(0xFFFA, 8);
+    fn nmi(&mut self, b_flag: bool) {
+        self.run_interrupt(0xFFFA, 8, b_flag);
     }
 
     fn push_to_stack(&mut self, data: u8) {
@@ -573,8 +580,9 @@ fn BPL(o: &mut Olc6502) -> u8 { // Branch on Result Plus
 }
 
 #[allow(non_snake_case)]
+// TODO: add test!
 fn BRK(o: &mut Olc6502) -> u8 { // Force Break
-    o.nmi();
+    o.nmi(true);
     o.prog_ctr += 1;
     return 0;
 }
@@ -785,7 +793,8 @@ fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
 
 #[allow(non_snake_case)]
 fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
-    o.push_to_stack(o.status_reg);
+    let sr_copy = o.status_reg | 0x18; // set bits 5 and 4 (B flag)
+    o.push_to_stack(sr_copy);
     return 0;
 }
 
@@ -1006,33 +1015,32 @@ mod tests {
         o.bus.write(0xFFFE, 0xAD);
         o.bus.write(0xFFFF, 0xDE);
         let old_pc = o.prog_ctr;
-        let old_status = o.status_reg;
         let old_stack = o.stack_top();
         o.irq();
         assert!(o.bus.read(0x01FD) == 0x11);
         assert!(o.bus.read(0x01FC) == 0xEC);
-        assert!(o.bus.read(0x01FB) == 0x28);
+        assert!(o.bus.read(0x01FB) == 0x30);
         assert!(o.prog_ctr == 0xDEAD);
         assert!(o.get_flag(Flags6502::I) == 1);
         assert!(o.get_flag(Flags6502::B) == 0);
         assert!(o.get_flag(Flags6502::U) == 1);
         RTI(&mut o);
         assert!(o.prog_ctr == old_pc);
-        assert!(o.status_reg == old_status);
+        assert!(o.status_reg == 0x30);
         assert!(o.stack_top() == old_stack);
     }
 
+    #[test]
     fn test_nmi() {
         let mut o: Olc6502 = create_olc6502();
         o.prog_ctr = 0x11EC;
         o.status_reg = 0x28;
         o.bus.write(0xFFFA, 0xAD);
         o.bus.write(0xFFFB, 0xDE);
-        o.set_flag(Flags6502::I, true);
-        o.nmi();
-        assert!(o.bus.read(0x01FF) == 0x11);
-        assert!(o.bus.read(0x01FE) == 0xEC);
-        assert!(o.bus.read(0x01FD) == 0x28);
+        o.nmi(false);
+        assert!(o.bus.read(0x01FD) == 0x11);
+        assert!(o.bus.read(0x01FC) == 0xEC);
+        assert!(o.bus.read(0x01FB) == 0x30);
         assert!(o.prog_ctr == 0xDEAD);
         assert!(o.get_flag(Flags6502::I) == 1);
         assert!(o.get_flag(Flags6502::B) == 0);
@@ -2330,7 +2338,7 @@ mod tests {
         let old_stack_ptr = o.stack_ptr;
         o.status_reg = 0x14;
         PHP(&mut o);
-        assert!(o.bus.read(stack_end) == 0x14);
+        assert!(o.bus.read(stack_end) == 0x1C); // account for 'B flag' pushed as side effect
         assert!(o.stack_ptr == old_stack_ptr - 1);
     }
 
