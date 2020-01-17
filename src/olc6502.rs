@@ -185,6 +185,11 @@ impl Olc6502 {
         }
     }
 
+    pub fn set_log_file(&mut self, filename: &str) {
+        let file = File::create(filename).unwrap();
+        self.log_file = LineWriter::new(file);
+    }
+
     fn stack_top(&self) -> u16 {
         return STACK_BASE | self.stack_ptr as u16;
     }
@@ -253,7 +258,7 @@ impl Olc6502 {
 }
 
 pub fn create_olc6502() -> Olc6502 {
-    let file = File::create("./log/log.txt").unwrap();
+    let file = File::create("./log/olc6502.log").unwrap();
     let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
@@ -2776,6 +2781,7 @@ mod tests {
 		*/
 		let assembled_source: String = "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA".to_string();
         let mut o: Olc6502 = create_olc6502();
+        o.set_log_file("./log/multiply_10_by_3.log");
         o.load_program(assembled_source);
         o.run_program();
         assert!(o.bus.read(0x0002) == 0x1E);
@@ -2798,6 +2804,7 @@ mod tests {
         */
         let assembled_source: String = "A2 08 CA 8E 00 02 E0 03 D0 F8 8E 01 02 EA EA EA".to_string();
         let mut o: Olc6502 = create_olc6502();
+        o.set_log_file("./log/short_loop.log");
         o.load_program(assembled_source);
         o.run_program();
         assert!(o.bus.read(0x0201) == 0x03);

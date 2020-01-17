@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 use super::cartridge;
-use super::logline;
 use super::olc2C02;
 
 pub struct Nes {
@@ -52,6 +51,7 @@ mod tests {
     use super::*;
     use std::fs::File;
     use std::io::{prelude::*, BufReader};
+    use super::super::logline;
 
     #[test]
     fn load_and_run_program() {
@@ -72,6 +72,7 @@ mod tests {
         */
         let assembled_source: String = "A2 08 CA 8E 00 02 E0 03 D0 F8 8E 01 02 EA EA EA".to_string();
         let mut nes = create_nes();
+        nes.ppu.cpu.set_log_file("./log/load_and_run_program.log");
         nes.load_program(assembled_source);
         nes.run_program();
         assert!(nes.read_cpu_address(0x0201) == 0x03);
@@ -88,12 +89,13 @@ mod tests {
     #[test]
     fn nestest_regular_opcodes() {
         let mut nes = create_nes();
+        nes.ppu.cpu.set_log_file("./log/nestest_regular_opcodes.log");
         nes.load_rom("./test_files/nestest.nes");
         nes.write_cpu_address(0x02, 0x01);
         nes.ppu.cpu.run_automation();
         let result = nes.read_cpu_address(0x02);
         
-        let our_file = File::open("./log/log.txt").unwrap();
+        let our_file = File::open("./log/nestest_regular_opcodes.log").unwrap();
         let their_file = File::open("./test_files/nestest.log").unwrap();
         let our_reader = BufReader::new(our_file);
         let their_reader = BufReader::new(their_file);

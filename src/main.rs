@@ -1,7 +1,7 @@
 mod bus;
 mod cartridge;
-mod logline;
 mod mapper;
+mod logline;
 mod nes;
 #[allow(non_snake_case)]
 mod olc2C02;
