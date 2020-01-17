@@ -36,6 +36,8 @@ pub struct Olc6502 {
     opcode: u8,
     cycles: u8,
 
+    lines_of_code: u32,
+
     lookup: [Instruction; 256],
 
     program_complete: bool,
@@ -111,6 +113,7 @@ impl Olc6502 {
 
     fn clock(&mut self) {
         if self.cycles == 0 {
+            self.lines_of_code += 1; // debug variable
             self.opcode = self.read(self.prog_ctr);
             let op_index = usize::from(self.opcode);
             if self.lookup[op_index].name == "BRK" && self.stack_ptr == 0 {
@@ -199,10 +202,10 @@ impl Olc6502 {
         self.push_to_stack(self.prog_ctr as u8);
         let mut sr_copy = self.status_reg;
         if b_flag == true {
-            sr_copy |= 0x18; 
+            sr_copy |= 0x30; 
         } else {
-            sr_copy |= 0x10; // turn on bit 5
-            sr_copy &= 0b1111_0111; // turn off bit 4
+            sr_copy |= 0b0010_0000; // turn on bit 5
+            sr_copy &= 0b1110_1111; // turn off bit 4
         }
         self.push_to_stack(sr_copy);
 
@@ -272,6 +275,7 @@ pub fn create_olc6502() -> Olc6502 {
         addr_rel: 0,
         opcode: 0,
         cycles: 0,
+        lines_of_code: 0,
         lookup: populate_lookup_table(),
         program_complete: false,
         log_file: LineWriter::new(file),
@@ -798,7 +802,7 @@ fn PHA(o: &mut Olc6502) -> u8 { // Push Accumulator on Stack
 
 #[allow(non_snake_case)]
 fn PHP(o: &mut Olc6502) -> u8 { // Push Processor Status on Stack
-    let sr_copy = o.status_reg | 0x18; // set bits 5 and 4 (B flag)
+    let sr_copy = o.status_reg | 0x30; // set bits 5 and 4 (B flag)
     o.push_to_stack(sr_copy);
     return 0;
 }
@@ -813,7 +817,7 @@ fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
 
 #[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
-    o.status_reg = o.pop_from_stack();
+    o.status_reg = o.pop_from_stack() & 0b1100_1111; // ignore bits 5 and 4
     return 0;
 }
 
@@ -851,7 +855,7 @@ fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
 
 #[allow(non_snake_case)]
 fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
-    o.status_reg = o.pop_from_stack();
+    o.status_reg = o.pop_from_stack() & 0b1100_1111; // ignore bits 5 and 4
 
     o.prog_ctr = o.pop_from_stack() as u16;
     o.prog_ctr |= (o.pop_from_stack() as u16) << 8;
@@ -1016,7 +1020,7 @@ mod tests {
     fn test_irq_and_RTI() {
         let mut o: Olc6502 = create_olc6502();
         o.prog_ctr = 0x11EC;
-        o.status_reg = 0x28;
+        o.status_reg = 0x0B;
         o.bus.write(0xFFFE, 0xAD);
         o.bus.write(0xFFFF, 0xDE);
         let old_pc = o.prog_ctr;
@@ -1024,14 +1028,14 @@ mod tests {
         o.irq();
         assert!(o.bus.read(0x01FD) == 0x11);
         assert!(o.bus.read(0x01FC) == 0xEC);
-        assert!(o.bus.read(0x01FB) == 0x30);
+        assert!(o.bus.read(0x01FB) == 0x2B);
         assert!(o.prog_ctr == 0xDEAD);
         assert!(o.get_flag(Flags6502::I) == 1);
         assert!(o.get_flag(Flags6502::B) == 0);
         assert!(o.get_flag(Flags6502::U) == 1);
         RTI(&mut o);
         assert!(o.prog_ctr == old_pc);
-        assert!(o.status_reg == 0x30);
+        assert!(o.status_reg == 0x0B); // ignore bits 5 and 4
         assert!(o.stack_top() == old_stack);
     }
 
@@ -1045,7 +1049,7 @@ mod tests {
         o.nmi(false);
         assert!(o.bus.read(0x01FD) == 0x11);
         assert!(o.bus.read(0x01FC) == 0xEC);
-        assert!(o.bus.read(0x01FB) == 0x30);
+        assert!(o.bus.read(0x01FB) == 0x28);
         assert!(o.prog_ctr == 0xDEAD);
         assert!(o.get_flag(Flags6502::I) == 1);
         assert!(o.get_flag(Flags6502::B) == 0);
@@ -2343,7 +2347,7 @@ mod tests {
         let old_stack_ptr = o.stack_ptr;
         o.status_reg = 0x14;
         PHP(&mut o);
-        assert!(o.bus.read(stack_end) == 0x1C); // account for 'B flag' pushed as side effect
+        assert!(o.bus.read(stack_end) == 0x34); // account for 'B flag' pushed as side effect
         assert!(o.stack_ptr == old_stack_ptr - 1);
     }
 
@@ -2397,7 +2401,7 @@ mod tests {
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
         PLP(&mut o);
-        assert!(o.status_reg == 0x14);
+        assert!(o.status_reg == 0x04); // account for ignoring bits 5 and 4
         assert!(o.stack_ptr == stack_end as u8);
     }
 
