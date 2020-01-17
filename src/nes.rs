@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use super::cartridge;
+use super::logline;
 use super::olc2C02;
 
 pub struct Nes {
@@ -101,9 +102,9 @@ mod tests {
         for (our_line_w, their_line_w) in our_reader.lines().zip(their_reader.lines()) {
             let our_line = our_line_w.unwrap();
             let their_line = their_line_w.unwrap();
-            let our_prog_ctr = our_line.split_whitespace().next().unwrap();
-            let their_prog_ctr = their_line.split_whitespace().next().unwrap();
-            if our_prog_ctr != their_prog_ctr {
+            let our_logline = logline::parse_my_line(&our_line);
+            let their_logline = logline::parse_their_line(&their_line);
+            if our_logline != their_logline {
                 println!("First different line: {}", current_line);
                 assert!(false);
             }
