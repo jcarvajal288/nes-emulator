@@ -1,5 +1,6 @@
 mod bus;
 mod cartridge;
+mod logline;
 mod mapper;
 mod nes;
 #[allow(non_snake_case)]
