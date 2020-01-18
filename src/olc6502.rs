@@ -817,7 +817,7 @@ fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
 
 #[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
-    o.status_reg = o.pop_from_stack() & 0b1100_1111; // ignore bits 5 and 4
+    o.status_reg = o.pop_from_stack() & 0b1110_1111; // ignore bit 4
     return 0;
 }
 
