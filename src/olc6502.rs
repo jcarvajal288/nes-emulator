@@ -884,7 +884,6 @@ fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
 fn SBC(o: &mut Olc6502) -> u8 { // Subtract Memory from Accumulator with Borrow
     let data: u8 = o.fetch();
     let inverted_data: u16 = (data as u16) ^ 0x00FF;
-    o.set_flag(Flags6502::C, true);
     add(o, inverted_data); 
     return 1;
 }
@@ -2353,6 +2352,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x14;
         o.fetched_data = 0x04;
+        o.set_flag(Flags6502::C, true);
         SBC(&mut o);
         assert!(o.accumulator == 0x10);
         assert!(o.get_flag(Flags6502::V) == 0);
@@ -2367,6 +2367,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x40;
         o.fetched_data = 0x40;
+        o.set_flag(Flags6502::C, true);
         SBC(&mut o);
         assert!(o.accumulator == 0x00);
         assert!(o.get_flag(Flags6502::V) == 0);
@@ -2381,12 +2382,26 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x14;
         o.fetched_data = 0x15;
+        o.set_flag(Flags6502::C, true);
         SBC(&mut o);
         assert!(o.accumulator == 0xFF);
         assert!(o.get_flag(Flags6502::V) == 0);
         assert!(o.get_flag(Flags6502::N) == 1);
         assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_SBC_40_minus_0_carry_clear() {
+        // taken from line 542 in nestest.log
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x80;
+        o.fetched_data = 0x00;
+        o.status_reg = 0xA4;
+        SBC(&mut o);
+        assert!(o.accumulator == 0x7F);
+        assert!(o.status_reg == 0x65);
     }
 
     #[test]
