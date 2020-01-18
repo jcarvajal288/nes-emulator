@@ -91,7 +91,7 @@ mod tests {
         let mut nes = create_nes();
         nes.ppu.cpu.set_log_file("./log/nestest_regular_opcodes.log");
         nes.load_rom("./test_files/nestest.nes");
-        nes.write_cpu_address(0x02, 0x01);
+        nes.write_cpu_address(0x02, 0xFF);
         nes.ppu.cpu.run_automation();
         let result = nes.read_cpu_address(0x02);
         
