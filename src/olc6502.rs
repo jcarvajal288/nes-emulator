@@ -817,7 +817,14 @@ fn PLA(o: &mut Olc6502) -> u8 { // Pull Accumulator from Stack
 
 #[allow(non_snake_case)]
 fn PLP(o: &mut Olc6502) -> u8 { // Pull Processor Status from Stack
-    o.status_reg = o.pop_from_stack() & 0b1110_1111; // ignore bit 4
+    let temp = o.pop_from_stack();
+    o.set_flag(Flags6502::C, temp & 0x1 > 0);
+    o.set_flag(Flags6502::Z, temp & 0x2 > 0);
+    o.set_flag(Flags6502::I, temp & 0x4 > 0);
+    o.set_flag(Flags6502::D, temp & 0x8 > 0);
+    // ignore bits 4 and 5
+    o.set_flag(Flags6502::V, temp & 0x40 > 0);
+    o.set_flag(Flags6502::N, temp & 0x80 > 0);
     return 0;
 }
 
@@ -2401,7 +2408,33 @@ mod tests {
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
         PLP(&mut o);
-        assert!(o.status_reg == 0x04); // account for ignoring bits 5 and 4
+        assert!(o.status_reg == 0x24); // account for ignoring bits 5 and 4
+        assert!(o.stack_ptr == stack_end as u8);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLP_flag_by_flag_all_positive() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.status_reg = 0x0;
+        o.bus.write(stack_end, 0xFF);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLP(&mut o);
+        assert!(o.status_reg == 0xCF); // account for ignoring bits 5 and 4
+        assert!(o.stack_ptr == stack_end as u8);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_PLP_flag_by_flag_all_negative() {
+        let mut o: Olc6502 = create_olc6502();
+        let stack_end: u16 = STACK_BASE | o.stack_ptr as u16;
+        o.status_reg = 0xFF;
+        o.bus.write(stack_end, 0x00);
+        o.stack_ptr = (stack_end as u8) - 1;
+        PLP(&mut o);
+        assert!(o.status_reg == 0x30); // account for ignoring bits 5 and 4
         assert!(o.stack_ptr == stack_end as u8);
     }
 
