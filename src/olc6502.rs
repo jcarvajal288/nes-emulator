@@ -639,27 +639,30 @@ fn CLV(o: &mut Olc6502) -> u8 { // Clear Overflow Flag
 #[allow(non_snake_case)]
 fn CMP(o: &mut Olc6502) -> u8 { // Compare Memory And Accumulator
     let data = o.fetch();
+    let sub_result = u8::wrapping_sub(o.accumulator, data);
     o.set_flag(Flags6502::C, o.accumulator >= data);
     o.set_flag(Flags6502::Z, o.accumulator == data);
-    o.set_flag(Flags6502::N, o.accumulator >= 0x80);
+    o.set_flag(Flags6502::N, sub_result >= 0x80);
     return 1; 
 }
 
 #[allow(non_snake_case)]
 fn CPX(o: &mut Olc6502) -> u8 { // Compare Memory and Index X
     let data = o.fetch();
+    let sub_result = u8::wrapping_sub(o.x_reg, data);
     o.set_flag(Flags6502::C, o.x_reg >= data);
     o.set_flag(Flags6502::Z, o.x_reg == data);
-    o.set_flag(Flags6502::N, o.x_reg >= 0x80);
+    o.set_flag(Flags6502::N, sub_result >= 0x80);
     return 1; 
 }
 
 #[allow(non_snake_case)]
 fn CPY(o: &mut Olc6502) -> u8 { // Compare Memory And Index Y
     let data = o.fetch();
+    let sub_result = u8::wrapping_sub(o.y_reg, data);
     o.set_flag(Flags6502::C, o.y_reg >= data);
     o.set_flag(Flags6502::Z, o.y_reg == data);
-    o.set_flag(Flags6502::N, o.y_reg >= 0x80);
+    o.set_flag(Flags6502::N, sub_result >= 0x80);
     return 1; 
 }
 
@@ -1888,7 +1891,7 @@ mod tests {
         CMP(&mut o);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
@@ -1912,7 +1915,35 @@ mod tests {
         CMP(&mut o);
         assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CMP_N_flag_example() {
+        // taken from http://www.6502.org/tutorials/compare_beyond.html
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x01;
+        o.fetched_data = 0xFF;
+        CMP(&mut o);
+        assert!(o.accumulator == 0x01);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CMP_N_flag_example_2() {
+        // taken from same page above
+        let mut o: Olc6502 = create_olc6502();
+        o.accumulator = 0x7F;
+        o.fetched_data = 0x80;
+        CMP(&mut o);
+        assert!(o.accumulator == 0x7F);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
     }
 
     #[test]
@@ -1924,7 +1955,7 @@ mod tests {
         CPX(&mut o);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
@@ -1948,8 +1979,37 @@ mod tests {
         CPX(&mut o);
         assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CPX_N_flag_example() {
+        // taken from http://www.6502.org/tutorials/compare_beyond.html
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x01;
+        o.fetched_data = 0xFF;
+        CPX(&mut o);
+        assert!(o.x_reg == 0x01);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CPX_N_flag_example_2() {
+        // taken from same page above
+        let mut o: Olc6502 = create_olc6502();
+        o.x_reg = 0x7F;
+        o.fetched_data = 0x80;
+        CPX(&mut o);
+        assert!(o.x_reg == 0x7F);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
 
     #[test]
     #[allow(non_snake_case)]
@@ -1960,7 +2020,7 @@ mod tests {
         CPY(&mut o);
         assert!(o.get_flag(Flags6502::C) == 1);
         assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert!(o.get_flag(Flags6502::N) == 0);
     }
 
     #[test]
@@ -1984,8 +2044,37 @@ mod tests {
         CPY(&mut o);
         assert!(o.get_flag(Flags6502::C) == 0);
         assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CPY_N_flag_example() {
+        // taken from http://www.6502.org/tutorials/compare_beyond.html
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x01;
+        o.fetched_data = 0xFF;
+        CPY(&mut o);
+        assert!(o.y_reg == 0x01);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
         assert!(o.get_flag(Flags6502::N) == 0);
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn op_CPY_N_flag_example_2() {
+        // taken from same page above
+        let mut o: Olc6502 = create_olc6502();
+        o.y_reg = 0x7F;
+        o.fetched_data = 0x80;
+        CPY(&mut o);
+        assert!(o.y_reg == 0x7F);
+        assert!(o.get_flag(Flags6502::C) == 0);
+        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert!(o.get_flag(Flags6502::N) == 1);
+    }
+
 
     #[test]
     #[allow(non_snake_case)]
