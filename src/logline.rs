@@ -1,4 +1,9 @@
 #![allow(dead_code)]
+
+extern crate regex;
+
+use regex::Regex;
+
 /*
  * Test helper file used for comparing my log vs Nintendulator's log
  */
@@ -36,35 +41,21 @@ pub fn parse_my_line<'a>(line: &'a String) -> Logline<'a> {
 }
 
 pub fn parse_their_line<'a>(line: &'a String) -> Logline<'a> {
-    let splits: Vec<&str> = line.split_whitespace().collect();
-    let len = splits.len();
-    if joined_logline(&splits) { 
-        return Logline {
-            prog_ctr: splits[0],
-            stack_ptr: splits[len-4],
-            status_reg: splits[len-5],
-            y_reg: splits[len-6],
-            x_reg: splits[len-7],
-            accumulator: splits[len-8],
-        }
-    } else { 
-        return Logline {
-            prog_ctr: splits[0],
-            stack_ptr: splits[len-5],
-            status_reg: splits[len-6],
-            y_reg: splits[len-7],
-            x_reg: splits[len-8],
-            accumulator: splits[len-9],
-        }
+    lazy_static! {
+        static ref A_REG:  Regex = Regex::new("A:.{2}").unwrap();
+        static ref X_REG:  Regex = Regex::new("X:.{2}").unwrap();
+        static ref Y_REG:  Regex = Regex::new("Y:.{2}").unwrap();
+        static ref P_REG:  Regex = Regex::new("P:.{2}").unwrap();
+        static ref SP_REG: Regex = Regex::new("SP:.{2}").unwrap();
     }
-
-    fn joined_logline(splits: &Vec<&str>) -> bool {
-        for split in splits {
-            if split.starts_with("PPU") && split.len() == 4 {
-                return false;
-            }
-        }
-        return true;
+    let splits: Vec<&str> = line.split_whitespace().collect();
+    return Logline {
+        prog_ctr: splits[0],
+        accumulator: A_REG.find(line).unwrap().as_str(),
+        x_reg: X_REG.find(line).unwrap().as_str(),
+        y_reg: Y_REG.find(line).unwrap().as_str(),
+        status_reg: P_REG.find(line).unwrap().as_str(),
+        stack_ptr: SP_REG.find(line).unwrap().as_str(),
     }
 }
 
@@ -106,5 +97,17 @@ mod tests {
         assert!(logline.y_reg == "Y:00");
         assert!(logline.x_reg == "X:00");
         assert!(logline.accumulator == "A:00");
+    }
+
+    #[test]
+    fn parse_their_log_line_over_100_frame_buffer() {
+        let line = "DD1F  F5 00     SBC $00,X @ 78 = 40             A:40 X:78 Y:1D P:65 SP:FB PPU: 10,100 CYC:11377".to_string();
+        let logline = parse_their_line(&line);
+        assert!(logline.prog_ctr == "DD1F");
+        assert!(logline.stack_ptr == "SP:FB");
+        assert!(logline.status_reg == "P:65");
+        assert!(logline.y_reg == "Y:1D");
+        assert!(logline.x_reg == "X:78");
+        assert!(logline.accumulator == "A:40");
     }
 }
