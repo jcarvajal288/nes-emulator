@@ -736,8 +736,9 @@ fn JMP(o: &mut Olc6502) -> u8 { // Jump to New Location
 
 #[allow(non_snake_case)]
 fn JSR(o: &mut Olc6502) -> u8 { // Jump to New Location Saving Return Address
-    let hi = (o.prog_ctr >> 8) as u8;
-    let lo = (o.prog_ctr & 0x00FF) as u8;
+    let temp = o.prog_ctr - 1;
+    let hi = (temp >> 8) as u8;
+    let lo = (temp & 0x00FF) as u8;
     o.push_to_stack(hi);
     o.push_to_stack(lo);
     o.prog_ctr = o.addr_abs;
@@ -875,8 +876,9 @@ fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
 
 #[allow(non_snake_case)]
 fn RTS(o: &mut Olc6502) -> u8 { // Return from Subroutine
-    o.prog_ctr = o.pop_from_stack() as u16;
-    o.prog_ctr |= (o.pop_from_stack() as u16) << 8;
+    let mut temp = o.pop_from_stack() as u16;
+    temp |= (o.pop_from_stack() as u16) << 8;
+    o.prog_ctr = temp + 1;
     return 0;
 }
 
@@ -2564,7 +2566,7 @@ mod tests {
         let lo = o.pop_from_stack();
         let hi = o.pop_from_stack();
         assert!(o.prog_ctr == 0x1000);
-        assert!(lo == 0xAD);
+        assert!(lo == 0xAC);
         assert!(hi == 0xDE);
     }
 

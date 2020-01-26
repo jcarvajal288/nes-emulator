@@ -108,13 +108,13 @@ mod tests {
             let their_logline = logline::parse_their_line(&their_line);
             if our_logline != their_logline {
                 println!("First different line: {}", current_line);
-                assert!(false);
+                break;
             }
             current_line += 1;
         }
 
         if result != 0x00 {
-            println!("Failure code: {}", result);
+            println!("Failure code: {:02X}", result);
         }
         assert!(result == 0x00);
     }
