@@ -91,9 +91,7 @@ mod tests {
         let mut nes = create_nes();
         nes.ppu.cpu.set_log_file("./log/nestest_regular_opcodes.log");
         nes.load_rom("./test_files/nestest.nes");
-        nes.write_cpu_address(0x02, 0xFF);
         nes.ppu.cpu.run_automation();
-        let result = nes.read_cpu_address(0x02);
         
         let our_file = File::open("./log/nestest_regular_opcodes.log").unwrap();
         let their_file = File::open("./test_files/nestest.log").unwrap();
@@ -112,10 +110,6 @@ mod tests {
             }
             current_line += 1;
         }
-
-        if result != 0x00 {
-            println!("Failure code: {:02X}", result);
-        }
-        assert!(result == 0x00);
+        assert!(current_line == 5004); // 5004 is the line where undocumented opcodes start being tested
     }
 }
