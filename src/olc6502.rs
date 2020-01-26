@@ -867,7 +867,14 @@ fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
 
 #[allow(non_snake_case)]
 fn RTI(o: &mut Olc6502) -> u8 { // Return from Interrupt
-    o.status_reg = o.pop_from_stack() & 0b1100_1111; // ignore bits 5 and 4
+    let temp = o.pop_from_stack();
+    o.set_flag(Flags6502::C, temp & 0x1 > 0);
+    o.set_flag(Flags6502::Z, temp & 0x2 > 0);
+    o.set_flag(Flags6502::I, temp & 0x4 > 0);
+    o.set_flag(Flags6502::D, temp & 0x8 > 0);
+    // ignore bits 4 and 5
+    o.set_flag(Flags6502::V, temp & 0x40 > 0);
+    o.set_flag(Flags6502::N, temp & 0x80 > 0);
 
     o.prog_ctr = o.pop_from_stack() as u16;
     o.prog_ctr |= (o.pop_from_stack() as u16) << 8;
@@ -1048,7 +1055,12 @@ mod tests {
         assert!(o.get_flag(Flags6502::U) == 1);
         RTI(&mut o);
         assert!(o.prog_ctr == old_pc);
-        assert!(o.status_reg == 0x0B); // ignore bits 5 and 4
+        assert!(o.get_flag(Flags6502::C) == 1);
+        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert!(o.get_flag(Flags6502::I) == 0);
+        assert!(o.get_flag(Flags6502::D) == 1);
+        assert!(o.get_flag(Flags6502::V) == 0);
+        assert!(o.get_flag(Flags6502::N) == 0);
         assert!(o.stack_top() == old_stack);
     }
 
