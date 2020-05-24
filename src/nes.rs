@@ -4,6 +4,7 @@ use super::olc2C02;
 
 pub struct Nes {
     ppu: olc2C02::Olc2C02,
+    system_clock_counter: u32,
 }
 
 impl Nes {
@@ -17,8 +18,14 @@ impl Nes {
 
     }
 
-    pub fn clock() {
+    pub fn clock(&mut self) {
+        self.ppu.clock();
 
+        // cpu clock runs 3x slower than ppu clock
+        if self.system_clock_counter % 3 == 0 {
+            self.ppu.cpu.clock();
+        }
+        self.system_clock_counter += 1;
     }
 
     // test functions
@@ -42,6 +49,7 @@ impl Nes {
 pub fn create_nes() -> Nes {
     let nes = Nes {
         ppu: olc2C02::create_olc2C02(),
+        system_clock_counter: 0,
     };
     return nes;
 }

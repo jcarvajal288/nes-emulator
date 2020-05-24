@@ -64,6 +64,38 @@ impl PartialEq for Olc6502 {
 
 
 impl Olc6502 {
+
+    pub fn clock(&mut self) {
+        if self.cycles == 0 {
+            self.lines_of_code += 1; // debug variable
+            self.opcode = self.read(self.prog_ctr);
+            let op_index = usize::from(self.opcode);
+            if self.lookup[op_index].name == "BRK" && self.stack_ptr == 0 {
+                self.program_complete = true;
+                return;
+            }             
+            if self.lookup[op_index].name == "???" {
+                println!("Invalid opcode: {:2X}.  Ending program.", op_index);
+                self.program_complete = true;
+                return;
+            }
+            self.log_state();
+            self.prog_ctr += 1;
+
+            // Get starting number of cycles
+            self.cycles = self.lookup[op_index].cycles;
+
+            // execute next instruction
+            let additional_cycle1: u8 = (self.lookup[op_index].addrmode)(self);
+            let additional_cycle2: u8 = (self.lookup[op_index].operate)(self);
+
+            // add additional cycles if necessary
+            self.cycles += additional_cycle1 & additional_cycle2;
+        }
+
+        self.cycles -= 1;
+    }
+
     fn reset(&mut self) {
         // set program counter to known location
         self.addr_abs = 0xFFFC;
@@ -109,37 +141,6 @@ impl Olc6502 {
         } else {
             self.status_reg &= !f;
         }
-    }
-
-    fn clock(&mut self) {
-        if self.cycles == 0 {
-            self.lines_of_code += 1; // debug variable
-            self.opcode = self.read(self.prog_ctr);
-            let op_index = usize::from(self.opcode);
-            if self.lookup[op_index].name == "BRK" && self.stack_ptr == 0 {
-                self.program_complete = true;
-                return;
-            }             
-            if self.lookup[op_index].name == "???" {
-                println!("Invalid opcode: {:2X}.  Ending program.", op_index);
-                self.program_complete = true;
-                return;
-            }
-            self.log_state();
-            self.prog_ctr += 1;
-
-            // Get starting number of cycles
-            self.cycles = self.lookup[op_index].cycles;
-
-            // execute next instruction
-            let additional_cycle1: u8 = (self.lookup[op_index].addrmode)(self);
-            let additional_cycle2: u8 = (self.lookup[op_index].operate)(self);
-
-            // add additional cycles if necessary
-            self.cycles += additional_cycle1 & additional_cycle2;
-        }
-
-        self.cycles -= 1;
     }
 
     fn log_state(&mut self) {

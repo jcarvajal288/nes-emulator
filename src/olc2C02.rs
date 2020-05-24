@@ -7,11 +7,33 @@ const NUM_PALLETES: usize = 32;
 
 pub struct Olc2C02 {
     pub cpu: olc6502::Olc6502,
+
     nametables: [[u8; NAMETABLE_SIZE]; NUM_NAMETABLES],
     palettes: [u8; NUM_PALLETES],
+
+    scanline: i16,
+    cycle: i16,
+    frame_complete: bool,
 }
 
 impl Olc2C02 {
+    
+    pub fn clock(&mut self) {
+        
+        // TODO: set pixel here
+
+        self.cycle += 1;
+        if self.cycle >= 341 {
+            self.cycle = 0;
+            self.scanline += 1;
+
+            if self.scanline >= 261 {
+                self.scanline = -1;
+                self.frame_complete = true;
+            }
+        }
+    }
+
     fn cpu_read(&self, addr: u16) -> u8 {
         return self.cpu.bus.read(addr);
     }
@@ -27,6 +49,9 @@ pub fn create_olc2C02() -> Olc2C02 {
         cpu: olc6502::create_olc6502(),
         nametables: [[0x0; NAMETABLE_SIZE]; NUM_NAMETABLES],
         palettes: [0x0; NUM_PALLETES],
+        scanline: 0,
+        cycle: 0,
+        frame_complete: false,
     };
 }
 
