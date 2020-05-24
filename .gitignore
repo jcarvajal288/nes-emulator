@@ -3,3 +3,4 @@
 .vscode
 *.swp
 /log
+SDL2.dll
