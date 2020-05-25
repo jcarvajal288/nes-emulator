@@ -4,7 +4,6 @@ use super::olc2C02;
 
 pub struct Nes {
     ppu: olc2C02::Olc2C02,
-    //renderer: renderer::Renderer,
     system_clock_counter: u32,
 }
 

@@ -11,5 +11,8 @@ mod renderer;
 #[macro_use] extern crate lazy_static;
 
 fn main() {
-	renderer::render();
+	let mut nes = nes::create_nes();
+	loop {
+		nes.clock();
+	}
 }
