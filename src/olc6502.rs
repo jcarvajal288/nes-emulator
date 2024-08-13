@@ -262,7 +262,10 @@ impl Olc6502 {
 }
 
 pub fn create_olc6502() -> Olc6502 {
-    let file = File::create("./log/olc6502.log").unwrap();
+    let path = std::path::Path::new("./log/olc6502.log");
+    let prefix = path.parent().unwrap();
+    std::fs::create_dir_all(prefix).unwrap(); // create log directory if it doesn't exist
+    let file = File::create(path).unwrap();
     let mut o = Olc6502 {
         accumulator: 0,
         x_reg: 0,
