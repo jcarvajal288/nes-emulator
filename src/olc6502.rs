@@ -10,14 +10,14 @@ use super::bus;
 static STACK_BASE: u16 = 0x0100;
 
 enum Flags6502 {
-    C = (1 << 0), // Carry Bit
-    Z = (1 << 1), // Zero
-    I = (1 << 2), // Disable Interrupts
-    D = (1 << 3), // Decimal Mode (unused in nes)
-    B = (1 << 4), // Break
-    U = (1 << 5), // Unused
-    V = (1 << 6), // Overflow
-    N = (1 << 7), // Negative
+    C = 1 << 0, // Carry Bit
+    Z = 1 << 1, // Zero
+    I = 1 << 2, // Disable Interrupts
+    D = 1 << 3, // Decimal Mode (unused in nes)
+    B = 1 << 4, // Break
+    U = 1 << 5, // Unused
+    V = 1 << 6, // Overflow
+    N = 1 << 7, // Negative
 }
 
 pub struct Olc6502 {
@@ -127,10 +127,10 @@ impl Olc6502 {
 
     fn get_flag(&self, flag: Flags6502) -> u8 { 
         let f = flag as u8;
-        if (self.status_reg & f) > 0 {
-            return 1;
+        return if (self.status_reg & f) > 0 {
+            1
         } else {
-            return 0;
+            0
         }
     }
 
@@ -387,10 +387,10 @@ fn ABX(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing X
     o.addr_abs = (hi << 8) | lo;
     o.addr_abs += u16::from(o.x_reg);
 
-    if (o.addr_abs & 0xFF00) != (hi << 8) {
-        return 1;
+    return if (o.addr_abs & 0xFF00) != (hi << 8) {
+        1
     } else {
-        return 0;
+        0
     }
 }
 
@@ -405,10 +405,10 @@ fn ABY(o: &mut Olc6502) -> u8 { // Indexed Absolute Addressing Y
     o.addr_abs = (hi << 8) | lo;
     o.addr_abs = u16::wrapping_add(o.addr_abs, o.y_reg as u16);
 
-    if (o.addr_abs & 0xFF00) != (hi << 8) {
-        return 1;
+    return if (o.addr_abs & 0xFF00) != (hi << 8) {
+        1
     } else {
-        return 0;
+        0
     }
 }
 
@@ -455,10 +455,10 @@ fn IZY(o: &mut Olc6502) -> u8 { // Indirect Indexed Addressing Y
     o.addr_abs = (hi << 8) | lo;
     o.addr_abs = u16::wrapping_add(o.addr_abs, o.y_reg as u16);
 
-    if (o.addr_abs & 0xFF00) != (hi << 8) {
-        return 1;
+    return if (o.addr_abs & 0xFF00) != (hi << 8) {
+        1
     } else {
-        return 0;
+        0
     }
 }
 
@@ -842,7 +842,7 @@ fn ROL(o: &mut Olc6502) -> u8 { // Rotate One Bit Left (Memory or Accumulator)
     let data = o.fetch();
     let flag_c = o.get_flag(Flags6502::C);
     o.set_flag(Flags6502::C, data & 0x80 > 0);
-    let result: u8 = (data << 1 | flag_c) as u8;
+    let result: u8 = data << 1 | flag_c;
     o.set_flag(Flags6502::Z, result == 0);
     o.set_flag(Flags6502::N, result & 0x80 > 0);
     if o.lookup[o.opcode as usize].addrmode as usize == ACC as usize {
@@ -858,7 +858,7 @@ fn ROR(o: &mut Olc6502) -> u8 { // Rotate One Bit Right (Memory or Accumulator)
     let data = o.fetch();
     let flag_c = o.get_flag(Flags6502::C);
     o.set_flag(Flags6502::C, data & 0x1 > 0);
-    let result: u8 = (data >> 1 | flag_c << 7) as u8;
+    let result: u8 = data >> 1 | flag_c << 7;
     o.set_flag(Flags6502::Z, result == 0);
     o.set_flag(Flags6502::N, result & 0x80 > 0);
     if o.lookup[o.opcode as usize].addrmode as usize == ACC as usize {

@@ -60,11 +60,11 @@ pub fn create_cartridge_from_file(filename: &str) -> Option<Box<Cartridge>> {
         0 => { /* placeholder */ }
         1 => {
             let program_rom_len = (header.prg_rom_chunks as usize) * PROGRAM_ROM_CHUNK_SIZE;
-            let prg_ending_index = prg_starting_index + program_rom_len as usize;
+            let prg_ending_index = prg_starting_index + program_rom_len;
             program_rom = file_buffer[prg_starting_index..prg_ending_index].try_into().unwrap();
 
             let character_rom_len = (header.chr_rom_chunks as usize) * CHARACTER_ROM_CHUNK_SIZE;
-            let chr_ending_index = prg_ending_index + character_rom_len as usize;
+            let chr_ending_index = prg_ending_index + character_rom_len;
             character_rom = file_buffer[prg_ending_index..chr_ending_index].try_into().unwrap();
         }
         2 => { /* placeholder */ }
