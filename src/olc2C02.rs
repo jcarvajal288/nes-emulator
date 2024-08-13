@@ -63,6 +63,6 @@ mod tests {
     fn write_to_and_read_from_cpu_bus() {
         let mut ppu = create_olc2C02();
         ppu.cpu_write(0x24, 0x20);
-        assert!(ppu.cpu_read(0x24) == 0x20);
+        assert_eq!(ppu.cpu_read(0x24), 0x20);
     }
 }

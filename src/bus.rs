@@ -37,24 +37,24 @@ impl Bus {
 
     pub fn read(&self, addr: u16) -> u8 {
         let _read_only: bool = false; // this will be a parameter in the future
-        if addr <= 0x1FFF { 
+        return if addr <= 0x1FFF {
             // cpu bus has 8k addressable range but only 
             // 2k physical ram, so mirror 2k ram 4 times
-            return self.ram[usize::from(addr & 0x7FF)];
+            self.ram[usize::from(addr & 0x7FF)]
         } else if addr <= 0x3FFF { // ppu flags
-            return self.read_from_ppu(addr & 0x0007);
-        } else if addr >= 0x4020 { 
+            self.read_from_ppu(addr & 0x0007)
+        } else if addr >= 0x4020 {
             // program rom (or cpu rom if no cartridge is loaded)
             match self.cartridge.as_ref() {
                 Some(cart) => {
-                    return cart.read(addr);
+                    cart.read(addr)
                 }
                 None => {
-                    return self.ram[addr as usize];
+                    self.ram[addr as usize]
                 }
             }
         } else {
-            return 0x00;
+            0x00
         }
     }
 
@@ -162,27 +162,27 @@ mod tests {
     fn test_write() {
         let mut b: Bus = create_bus();
         b.write(0x24, 0x20);
-        assert!(b.ram[0x24] == 0x20);
+        assert_eq!(b.ram[0x24], 0x20);
     }
 
     #[test]
     fn test_read() {
         let mut b: Bus = create_bus();
         b.ram[0x24] = 0x20;
-        assert!(b.read(0x24) == 0x20);
+        assert_eq!(b.read(0x24), 0x20);
     }
 
     #[test]
     fn write_mirrored_address() {
         let mut b: Bus = create_bus();
         b.write(0x1111, 0xEA);
-        assert!(b.ram[0x111] == 0xEA);
+        assert_eq!(b.ram[0x111], 0xEA);
     }
 
     #[test]
     fn mirrored_read() {
         let mut b: Bus = create_bus();
         b.ram[0x0] = 0xEA;
-        assert!(b.read(0x800) == 0xEA);
+        assert_eq!(b.read(0x800), 0xEA);
     }
 }

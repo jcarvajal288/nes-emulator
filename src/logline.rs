@@ -27,7 +27,7 @@ impl<'a> PartialEq for Logline<'a> {
     }
 }
 
-pub fn parse_my_line<'a>(line: &'a String) -> Logline<'a> {
+pub fn parse_my_line(line: &String) -> Logline {
     let splits: Vec<&str> = line.split_whitespace().collect();
     let len = splits.len();
     return Logline {
@@ -40,7 +40,7 @@ pub fn parse_my_line<'a>(line: &'a String) -> Logline<'a> {
     }
 }
 
-pub fn parse_their_line<'a>(line: &'a String) -> Logline<'a> {
+pub fn parse_their_line(line: &String) -> Logline {
     lazy_static! {
         static ref A_REG:  Regex = Regex::new("A:.{2}").unwrap();
         static ref X_REG:  Regex = Regex::new("X:.{2}").unwrap();
@@ -67,47 +67,47 @@ mod tests {
     fn parse_my_log_line() {
         let line = "C000 JMP F5 C5		A:00 X:00 Y:00 P:24 SP:FD".to_string();
         let logline = parse_my_line(&line);
-        assert!(logline.prog_ctr == "C000");
-        assert!(logline.stack_ptr == "SP:FD");
-        assert!(logline.status_reg == "P:24");
-        assert!(logline.y_reg == "Y:00");
-        assert!(logline.x_reg == "X:00");
-        assert!(logline.accumulator == "A:00");
+        assert_eq!(logline.prog_ctr, "C000");
+        assert_eq!(logline.stack_ptr, "SP:FD");
+        assert_eq!(logline.status_reg, "P:24");
+        assert_eq!(logline.y_reg, "Y:00");
+        assert_eq!(logline.x_reg, "X:00");
+        assert_eq!(logline.accumulator, "A:00");
     }
 
     #[test]
     fn parse_their_log_line_separate_ppu() {
         let line = "C7A6  70 03     BVS $C7AB                       A:00 X:00 Y:00 P:26 SP:FB PPU: 34,  1 CYC:132".to_string();
         let logline = parse_their_line(&line);
-        assert!(logline.prog_ctr == "C7A6");
-        assert!(logline.stack_ptr == "SP:FB");
-        assert!(logline.status_reg == "P:26");
-        assert!(logline.y_reg == "Y:00");
-        assert!(logline.x_reg == "X:00");
-        assert!(logline.accumulator == "A:00");
+        assert_eq!(logline.prog_ctr, "C7A6");
+        assert_eq!(logline.stack_ptr, "SP:FB");
+        assert_eq!(logline.status_reg, "P:26");
+        assert_eq!(logline.y_reg, "Y:00");
+        assert_eq!(logline.x_reg, "X:00");
+        assert_eq!(logline.accumulator, "A:00");
     }
 
     #[test]
     fn parse_their_log_line_joined_ppu() {
         let line = "C740  EA        NOP                             A:00 X:00 Y:00 P:26 SP:FB PPU:108,  0 CYC:43".to_string();
         let logline = parse_their_line(&line);
-        assert!(logline.prog_ctr == "C740");
-        assert!(logline.stack_ptr == "SP:FB");
-        assert!(logline.status_reg == "P:26");
-        assert!(logline.y_reg == "Y:00");
-        assert!(logline.x_reg == "X:00");
-        assert!(logline.accumulator == "A:00");
+        assert_eq!(logline.prog_ctr, "C740");
+        assert_eq!(logline.stack_ptr, "SP:FB");
+        assert_eq!(logline.status_reg, "P:26");
+        assert_eq!(logline.y_reg, "Y:00");
+        assert_eq!(logline.x_reg, "X:00");
+        assert_eq!(logline.accumulator, "A:00");
     }
 
     #[test]
     fn parse_their_log_line_over_100_frame_buffer() {
         let line = "DD1F  F5 00     SBC $00,X @ 78 = 40             A:40 X:78 Y:1D P:65 SP:FB PPU: 10,100 CYC:11377".to_string();
         let logline = parse_their_line(&line);
-        assert!(logline.prog_ctr == "DD1F");
-        assert!(logline.stack_ptr == "SP:FB");
-        assert!(logline.status_reg == "P:65");
-        assert!(logline.y_reg == "Y:1D");
-        assert!(logline.x_reg == "X:78");
-        assert!(logline.accumulator == "A:40");
+        assert_eq!(logline.prog_ctr, "DD1F");
+        assert_eq!(logline.stack_ptr, "SP:FB");
+        assert_eq!(logline.status_reg, "P:65");
+        assert_eq!(logline.y_reg, "Y:1D");
+        assert_eq!(logline.x_reg, "X:78");
+        assert_eq!(logline.accumulator, "A:40");
     }
 }

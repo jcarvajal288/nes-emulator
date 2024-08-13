@@ -72,10 +72,10 @@ pub fn create_cartridge_from_file(filename: &str) -> Option<Box<Cartridge>> {
     }
 
     return Some(Box::new(Cartridge {
-        header: header,
-        mapper: mapper,
-        program_rom: program_rom,
-        character_rom: character_rom,
+        header,
+        mapper,
+        program_rom,
+        character_rom,
     }))
 }
 
@@ -122,15 +122,15 @@ mod tests {
         let file_buffer = read_rom_file(filename).unwrap();
         let header: Header = read_header(&file_buffer);
 
-        assert!(header.name == [0x4E, 0x45, 0x53, 0x1A]);
-        assert!(header.prg_rom_chunks == 0x01);
-        assert!(header.chr_rom_chunks == 0x01);
-        assert!(header.mapper1 == 0x00);
-        assert!(header.mapper2 == 0x00);
-        assert!(header.prg_ram_size == 0x00);
-        assert!(header.tv_system1 == 0x00);
-        assert!(header.tv_system2 == 0x00);
-        assert!(header.unused == [0x00, 0x00, 0x00, 0x00, 0x00]);
+        assert_eq!(header.name, [0x4E, 0x45, 0x53, 0x1A]);
+        assert_eq!(header.prg_rom_chunks, 0x01);
+        assert_eq!(header.chr_rom_chunks, 0x01);
+        assert_eq!(header.mapper1, 0x00);
+        assert_eq!(header.mapper2, 0x00);
+        assert_eq!(header.prg_ram_size, 0x00);
+        assert_eq!(header.tv_system1, 0x00);
+        assert_eq!(header.tv_system2, 0x00);
+        assert_eq!(header.unused, [0x00, 0x00, 0x00, 0x00, 0x00]);
     }
 
     #[test]
@@ -138,9 +138,9 @@ mod tests {
         let filename = "./test_files/nestest.nes";
         let cartridge: Box<Cartridge> = create_cartridge_from_file(filename).unwrap();
 
-        assert!(cartridge.program_rom.len() == PROGRAM_ROM_CHUNK_SIZE);
-        assert!(cartridge.program_rom.first() == Some(&0x4C));
-        assert!(cartridge.program_rom.last() == Some(&0xC5));
+        assert_eq!(cartridge.program_rom.len(), PROGRAM_ROM_CHUNK_SIZE);
+        assert_eq!(cartridge.program_rom.first(), Some(&0x4C));
+        assert_eq!(cartridge.program_rom.last(), Some(&0xC5));
     }
 
     #[test]
@@ -148,8 +148,8 @@ mod tests {
         let filename = "./test_files/nestest.nes";
         let cartridge: Box<Cartridge> = create_cartridge_from_file(filename).unwrap();
 
-        assert!(cartridge.character_rom.len() == CHARACTER_ROM_CHUNK_SIZE);
-        assert!(cartridge.character_rom.first() == Some(&0x00));
-        assert!(cartridge.character_rom.last() == Some(&0x00));
+        assert_eq!(cartridge.character_rom.len(), CHARACTER_ROM_CHUNK_SIZE);
+        assert_eq!(cartridge.character_rom.first(), Some(&0x00));
+        assert_eq!(cartridge.character_rom.last(), Some(&0x00));
     }
 }

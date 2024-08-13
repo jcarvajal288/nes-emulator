@@ -1000,14 +1000,14 @@ mod tests {
     fn test_status_reg_read() {
         let mut o: Olc6502 = create_olc6502();
         o.status_reg = 0x55;
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::I) == 1);
-        assert!(o.get_flag(Flags6502::D) == 0);
-        assert!(o.get_flag(Flags6502::B) == 1);
-        assert!(o.get_flag(Flags6502::U) == 0);
-        assert!(o.get_flag(Flags6502::V) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::I), 1);
+        assert_eq!(o.get_flag(Flags6502::D), 0);
+        assert_eq!(o.get_flag(Flags6502::B), 1);
+        assert_eq!(o.get_flag(Flags6502::U), 0);
+        assert_eq!(o.get_flag(Flags6502::V), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1015,28 +1015,28 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.status_reg = 0x00;
         o.set_flag(Flags6502::C, true);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
 
         o.set_flag(Flags6502::Z, true);
-        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
 
         o.set_flag(Flags6502::I, true);
-        assert!(o.get_flag(Flags6502::I) == 1);
+        assert_eq!(o.get_flag(Flags6502::I), 1);
 
         o.set_flag(Flags6502::D, true);
-        assert!(o.get_flag(Flags6502::D) == 1);
+        assert_eq!(o.get_flag(Flags6502::D), 1);
 
         o.set_flag(Flags6502::B, true);
-        assert!(o.get_flag(Flags6502::B) == 1);
+        assert_eq!(o.get_flag(Flags6502::B), 1);
 
         o.set_flag(Flags6502::U, true);
-        assert!(o.get_flag(Flags6502::U) == 1);
+        assert_eq!(o.get_flag(Flags6502::U), 1);
 
         o.set_flag(Flags6502::V, true);
-        assert!(o.get_flag(Flags6502::V) == 1);
+        assert_eq!(o.get_flag(Flags6502::V), 1);
 
         o.set_flag(Flags6502::N, true);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -1050,22 +1050,22 @@ mod tests {
         let old_pc = o.prog_ctr;
         let old_stack = o.stack_top();
         o.irq();
-        assert!(o.bus.read(0x01FD) == 0x11);
-        assert!(o.bus.read(0x01FC) == 0xEC);
-        assert!(o.bus.read(0x01FB) == 0x2B);
-        assert!(o.prog_ctr == 0xDEAD);
-        assert!(o.get_flag(Flags6502::I) == 1);
-        assert!(o.get_flag(Flags6502::B) == 0);
-        assert!(o.get_flag(Flags6502::U) == 1);
+        assert_eq!(o.bus.read(0x01FD), 0x11);
+        assert_eq!(o.bus.read(0x01FC), 0xEC);
+        assert_eq!(o.bus.read(0x01FB), 0x2B);
+        assert_eq!(o.prog_ctr, 0xDEAD);
+        assert_eq!(o.get_flag(Flags6502::I), 1);
+        assert_eq!(o.get_flag(Flags6502::B), 0);
+        assert_eq!(o.get_flag(Flags6502::U), 1);
         RTI(&mut o);
-        assert!(o.prog_ctr == old_pc);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::I) == 0);
-        assert!(o.get_flag(Flags6502::D) == 1);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.stack_top() == old_stack);
+        assert_eq!(o.prog_ctr, old_pc);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::I), 0);
+        assert_eq!(o.get_flag(Flags6502::D), 1);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.stack_top(), old_stack);
     }
 
     #[test]
@@ -1076,13 +1076,13 @@ mod tests {
         o.bus.write(0xFFFA, 0xAD);
         o.bus.write(0xFFFB, 0xDE);
         o.nmi(false);
-        assert!(o.bus.read(0x01FD) == 0x11);
-        assert!(o.bus.read(0x01FC) == 0xEC);
-        assert!(o.bus.read(0x01FB) == 0x28);
-        assert!(o.prog_ctr == 0xDEAD);
-        assert!(o.get_flag(Flags6502::I) == 1);
-        assert!(o.get_flag(Flags6502::B) == 0);
-        assert!(o.get_flag(Flags6502::U) == 1);
+        assert_eq!(o.bus.read(0x01FD), 0x11);
+        assert_eq!(o.bus.read(0x01FC), 0xEC);
+        assert_eq!(o.bus.read(0x01FB), 0x28);
+        assert_eq!(o.prog_ctr, 0xDEAD);
+        assert_eq!(o.get_flag(Flags6502::I), 1);
+        assert_eq!(o.get_flag(Flags6502::B), 0);
+        assert_eq!(o.get_flag(Flags6502::U), 1);
     }
 
     // addressing mode tests
@@ -1093,7 +1093,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0x65;
         ACC(&mut o);
-        assert!(o.fetched_data == 0x65);
+        assert_eq!(o.fetched_data, 0x65);
     }
 
     #[test]
@@ -1102,7 +1102,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         let current_addr: u16 = o.prog_ctr;
         IMM(&mut o);
-        assert!(o.addr_abs == current_addr);
+        assert_eq!(o.addr_abs, current_addr);
     }
 
     #[test]
@@ -1124,7 +1124,7 @@ mod tests {
         o.bus.write(current_addr, offset);
         REL(&mut o);
         let new_addr: u16 = current_addr + u16::from(offset) + 1;
-        assert!(o.addr_abs == new_addr);
+        assert_eq!(o.addr_abs, new_addr);
     }
 
     #[test]
@@ -1136,7 +1136,7 @@ mod tests {
         o.prog_ctr = current_addr;
         o.bus.write(current_addr, offset);
         REL(&mut o);
-        assert!(o.addr_abs == 0x8010);
+        assert_eq!(o.addr_abs, 0x8010);
     }
 
     #[test]
@@ -1148,7 +1148,7 @@ mod tests {
         o.bus.write(current_addr+1, 0x40);
         o.prog_ctr = current_addr;
         ABS(&mut o);
-        assert!(o.addr_abs == 0x4032);
+        assert_eq!(o.addr_abs, 0x4032);
     }
 
     #[test]
@@ -1159,7 +1159,7 @@ mod tests {
         o.bus.write(current_addr, 0x32);
         o.prog_ctr = current_addr;
         ZP0(&mut o);
-        assert!(o.addr_abs == 0x32);
+        assert_eq!(o.addr_abs, 0x32);
     }
 
     #[test]
@@ -1171,7 +1171,7 @@ mod tests {
         o.bus.write(current_addr, 0xC0);
         o.prog_ctr = current_addr;
         ZPX(&mut o);
-        assert!(o.addr_abs == 0x0020);
+        assert_eq!(o.addr_abs, 0x0020);
     }
 
     #[test]
@@ -1183,7 +1183,7 @@ mod tests {
         o.bus.write(current_addr, 0xC0);
         o.prog_ctr = current_addr;
         ZPY(&mut o);
-        assert!(o.addr_abs == 0x0020);
+        assert_eq!(o.addr_abs, 0x0020);
     }
 
     #[test]
@@ -1196,7 +1196,7 @@ mod tests {
         o.bus.write(0x1001, 0x3A);
         o.prog_ctr = 0x24;
         IND(&mut o);
-        assert!(o.addr_abs == 0x3A52);
+        assert_eq!(o.addr_abs, 0x3A52);
     }
 
     #[test]
@@ -1210,7 +1210,7 @@ mod tests {
         o.bus.write(0x1100, 0xEE);
         o.prog_ctr = 0x24;
         IND(&mut o);
-        assert!(o.addr_abs == 0xAA3A);
+        assert_eq!(o.addr_abs, 0xAA3A);
     }
 
     #[test]
@@ -1223,7 +1223,7 @@ mod tests {
         o.bus.write(current_addr+1, 0x40);
         o.prog_ctr = current_addr;
         ABX(&mut o);
-        assert!(o.addr_abs == 0x4036);
+        assert_eq!(o.addr_abs, 0x4036);
     }
 
     #[test]
@@ -1236,7 +1236,7 @@ mod tests {
         o.bus.write(current_addr+1, 0x40);
         o.prog_ctr = current_addr;
         ABY(&mut o);
-        assert!(o.addr_abs == 0x4036);
+        assert_eq!(o.addr_abs, 0x4036);
     }
 
     #[test]
@@ -1249,7 +1249,7 @@ mod tests {
         o.bus.write(current_addr+1, 0xFF);
         o.prog_ctr = current_addr;
         ABY(&mut o);
-        assert!(o.addr_abs == 0x0000);
+        assert_eq!(o.addr_abs, 0x0000);
     }
 
     #[test]
@@ -1260,7 +1260,7 @@ mod tests {
         o.bus.write(0x24, 0x74);
         o.bus.write(0x25, 0x20);
         IZX(&mut o);
-        assert!(o.addr_abs == 0x2074);
+        assert_eq!(o.addr_abs, 0x2074);
     }
 
     #[test]
@@ -1272,7 +1272,7 @@ mod tests {
         o.bus.write(0xFF, 0x74);
         o.bus.write(0x00, 0x20);
         IZX(&mut o);
-        assert!(o.addr_abs == 0x2074);
+        assert_eq!(o.addr_abs, 0x2074);
     }
 
     #[test]
@@ -1285,7 +1285,7 @@ mod tests {
         o.bus.write(0x86, 0xFF);
         o.bus.write(0x87, 0xFF);
         IZY(&mut o);
-        assert!(o.addr_abs == 0x0000);
+        assert_eq!(o.addr_abs, 0x0000);
     }
     // endregion
 
@@ -1298,9 +1298,9 @@ mod tests {
         o.accumulator = 0xF9;
         o.fetched_data = 0x45;
         AND(&mut o);
-        assert!(o.accumulator == 0x41);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x41);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1310,9 +1310,9 @@ mod tests {
         o.accumulator = 0xFF;
         o.fetched_data = 0x00;
         AND(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1322,9 +1322,9 @@ mod tests {
         o.accumulator = 0xFF;
         o.fetched_data = 0xF0;
         AND(&mut o);
-        assert!(o.accumulator == 0xF0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xF0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -1335,10 +1335,10 @@ mod tests {
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
         ASL(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
     }
 
     #[test]
@@ -1348,10 +1348,10 @@ mod tests {
         o.fetched_data = 0x45;
         o.addr_abs = 0x100;
         ASL(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x8A);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x8A);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
     }
 
     #[test]
@@ -1361,11 +1361,11 @@ mod tests {
         o.accumulator = 0x04;
         o.fetched_data = 0x14;
         ADC(&mut o);
-        assert!(o.accumulator == 0x18);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x18);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1375,11 +1375,11 @@ mod tests {
         o.accumulator = 0x78;
         o.fetched_data = 0x78;
         ADC(&mut o);
-        assert!(o.accumulator == 0xF0);
-        assert!(o.get_flag(Flags6502::V) == 1);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0xF0);
+        assert_eq!(o.get_flag(Flags6502::V), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1389,11 +1389,11 @@ mod tests {
         o.accumulator = 0x78;
         o.fetched_data = 0xEC;
         ADC(&mut o);
-        assert!(o.accumulator == 0x64);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x64);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1403,11 +1403,11 @@ mod tests {
         o.accumulator = 0x04;
         o.fetched_data = 0xF0;
         ADC(&mut o);
-        assert!(o.accumulator == 0xF4);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0xF4);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1417,11 +1417,11 @@ mod tests {
         o.accumulator = 0xFC;
         o.fetched_data = 0x60;
         ADC(&mut o);
-        assert!(o.accumulator == 0x5C);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x5C);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1431,11 +1431,11 @@ mod tests {
         o.accumulator = 0x88;
         o.fetched_data = 0x04;
         ADC(&mut o);
-        assert!(o.accumulator == 0x8C);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x8C);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1445,11 +1445,11 @@ mod tests {
         o.accumulator = 0xD0;
         o.fetched_data = 0x90;
         ADC(&mut o);
-        assert!(o.accumulator == 0x60);
-        assert!(o.get_flag(Flags6502::V) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x60);
+        assert_eq!(o.get_flag(Flags6502::V), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1459,11 +1459,11 @@ mod tests {
         o.accumulator = 0xF6;
         o.fetched_data = 0xF6;
         ADC(&mut o);
-        assert!(o.accumulator == 0xEC);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0xEC);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -1473,11 +1473,11 @@ mod tests {
         o.accumulator = 0x14;
         o.fetched_data = 0xEC;
         ADC(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
     }
 
 
@@ -1492,8 +1492,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, false);
         BCS(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1507,8 +1507,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, true);
         BCS(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1522,8 +1522,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, true);
         BCS(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1537,8 +1537,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, true);
         BCC(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1552,8 +1552,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, false);
         BCC(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1567,8 +1567,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::C, false);
         BCC(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1582,8 +1582,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, false);
         BEQ(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1593,9 +1593,9 @@ mod tests {
         o.accumulator = 0xF0;
         o.fetched_data = 0x0F;
         BIT(&mut o);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::V) == 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
     }
 
     #[test]
@@ -1605,9 +1605,9 @@ mod tests {
         o.accumulator = 0xF0;
         o.fetched_data = 0xFF;
         BIT(&mut o);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::V) == 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::V), 1);
     }
 
     #[test]
@@ -1621,8 +1621,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, true);
         BEQ(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1636,8 +1636,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, true);
         BEQ(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1651,8 +1651,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, true);
         BNE(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1666,8 +1666,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, false);
         BNE(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1681,8 +1681,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::Z, false);
         BNE(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1696,8 +1696,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, false);
         BMI(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1711,8 +1711,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, true);
         BMI(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1726,8 +1726,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, true);
         BMI(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1741,8 +1741,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, true);
         BPL(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1756,8 +1756,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, false);
         BPL(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1771,8 +1771,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::N, false);
         BPL(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1786,8 +1786,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, true);
         BVC(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1801,8 +1801,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, false);
         BVC(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1816,8 +1816,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, false);
         BVC(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1831,8 +1831,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, false);
         BVS(&mut o);
-        assert!(o.prog_ctr == addr); // no jump
-        assert!(o.cycles == current_cycles); 
+        assert_eq!(o.prog_ctr, addr); // no jump
+        assert_eq!(o.cycles, current_cycles);
     }
 
     #[test]
@@ -1846,8 +1846,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, true);
         BVS(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 1); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 1);
     }
 
     #[test]
@@ -1861,8 +1861,8 @@ mod tests {
         o.cycles = current_cycles;
         o.set_flag(Flags6502::V, true);
         BVS(&mut o);
-        assert!(o.prog_ctr == o.addr_abs);
-        assert!(o.cycles == current_cycles + 2); 
+        assert_eq!(o.prog_ctr, o.addr_abs);
+        assert_eq!(o.cycles, current_cycles + 2);
     }
 
     #[test]
@@ -1871,7 +1871,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::C, true);
         CLC(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
     }
 
     #[test]
@@ -1880,7 +1880,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::D, true);
         CLD(&mut o);
-        assert!(o.get_flag(Flags6502::D) == 0);
+        assert_eq!(o.get_flag(Flags6502::D), 0);
     }
 
     #[test]
@@ -1889,7 +1889,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::I, true);
         CLI(&mut o);
-        assert!(o.get_flag(Flags6502::I) == 0);
+        assert_eq!(o.get_flag(Flags6502::I), 0);
     }
 
     #[test]
@@ -1898,7 +1898,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::V, true);
         CLV(&mut o);
-        assert!(o.get_flag(Flags6502::V) == 0);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
     }
 
     #[test]
@@ -1908,9 +1908,9 @@ mod tests {
         o.accumulator = 0x81;
         o.fetched_data = 0x70;
         CMP(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1920,9 +1920,9 @@ mod tests {
         o.accumulator = 0x70;
         o.fetched_data = 0x70;
         CMP(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1932,9 +1932,9 @@ mod tests {
         o.accumulator = 0x70;
         o.fetched_data = 0x81;
         CMP(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -1945,10 +1945,10 @@ mod tests {
         o.accumulator = 0x01;
         o.fetched_data = 0xFF;
         CMP(&mut o);
-        assert!(o.accumulator == 0x01);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x01);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1959,10 +1959,10 @@ mod tests {
         o.accumulator = 0x7F;
         o.fetched_data = 0x80;
         CMP(&mut o);
-        assert!(o.accumulator == 0x7F);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0x7F);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -1972,9 +1972,9 @@ mod tests {
         o.x_reg = 0x81;
         o.fetched_data = 0x70;
         CPX(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1984,9 +1984,9 @@ mod tests {
         o.x_reg = 0x70;
         o.fetched_data = 0x70;
         CPX(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -1996,9 +1996,9 @@ mod tests {
         o.x_reg = 0x70;
         o.fetched_data = 0x80;
         CPX(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2009,10 +2009,10 @@ mod tests {
         o.x_reg = 0x01;
         o.fetched_data = 0xFF;
         CPX(&mut o);
-        assert!(o.x_reg == 0x01);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x01);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2023,10 +2023,10 @@ mod tests {
         o.x_reg = 0x7F;
         o.fetched_data = 0x80;
         CPX(&mut o);
-        assert!(o.x_reg == 0x7F);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0x7F);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
 
@@ -2037,9 +2037,9 @@ mod tests {
         o.y_reg = 0x81;
         o.fetched_data = 0x70;
         CPY(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2049,9 +2049,9 @@ mod tests {
         o.y_reg = 0x70;
         o.fetched_data = 0x70;
         CPY(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2061,9 +2061,9 @@ mod tests {
         o.y_reg = 0x70;
         o.fetched_data = 0x80;
         CPY(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2074,10 +2074,10 @@ mod tests {
         o.y_reg = 0x01;
         o.fetched_data = 0xFF;
         CPY(&mut o);
-        assert!(o.y_reg == 0x01);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x01);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2088,10 +2088,10 @@ mod tests {
         o.y_reg = 0x7F;
         o.fetched_data = 0x80;
         CPY(&mut o);
-        assert!(o.y_reg == 0x7F);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0x7F);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
 
@@ -2101,9 +2101,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x70;
         DEC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x6F);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x6F);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2112,9 +2112,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x01;
         DEC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2123,9 +2123,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x8F;
         DEC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x8E);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.bus.read(o.addr_abs), 0x8E);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2134,9 +2134,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x00;
         DEC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0xFF);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.bus.read(o.addr_abs), 0xFF);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2145,9 +2145,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x70;
         DEX(&mut o);
-        assert!(o.x_reg == 0x6F);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x6F);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2156,9 +2156,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x01;
         DEX(&mut o);
-        assert!(o.x_reg == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2167,9 +2167,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x00;
         DEX(&mut o);
-        assert!(o.x_reg == 0xFF);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0xFF);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2178,9 +2178,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x8F;
         DEX(&mut o);
-        assert!(o.x_reg == 0x8E);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0x8E);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2189,9 +2189,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x70;
         DEY(&mut o);
-        assert!(o.y_reg == 0x6F);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x6F);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2200,9 +2200,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x01;
         DEY(&mut o);
-        assert!(o.y_reg == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2211,9 +2211,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x00;
         DEY(&mut o);
-        assert!(o.y_reg == 0xFF);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0xFF);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2222,9 +2222,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x8F;
         DEY(&mut o);
-        assert!(o.y_reg == 0x8E);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0x8E);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2234,9 +2234,9 @@ mod tests {
         o.fetched_data = 0x45;
         o.accumulator = 0x30;
         EOR(&mut o);
-        assert!(o.accumulator == 0x75);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x75);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2246,9 +2246,9 @@ mod tests {
         o.fetched_data = 0x80;
         o.accumulator = 0x45;
         EOR(&mut o);
-        assert!(o.accumulator == 0xC5);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xC5);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2258,9 +2258,9 @@ mod tests {
         o.fetched_data = 0xFF;
         o.accumulator = 0xFF;
         EOR(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2269,9 +2269,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x70;
         INC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x71);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x71);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2281,9 +2281,9 @@ mod tests {
         o.addr_abs = 0x10;
         o.fetched_data = 0xFF;
         INC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2293,9 +2293,9 @@ mod tests {
         o.addr_abs = 0x10;
         o.fetched_data = 0x80;
         INC(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x81);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.bus.read(o.addr_abs), 0x81);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2304,9 +2304,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x70;
         INX(&mut o);
-        assert!(o.x_reg == 0x71);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x71);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2315,9 +2315,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xFF;
         INX(&mut o);
-        assert!(o.x_reg == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2326,9 +2326,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0x80;
         INX(&mut o);
-        assert!(o.x_reg == 0x81);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0x81);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2337,9 +2337,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x70;
         INY(&mut o);
-        assert!(o.y_reg == 0x71);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x71);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2348,9 +2348,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0xFF;
         INY(&mut o);
-        assert!(o.y_reg == 0x0);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x0);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2359,9 +2359,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0x80;
         INY(&mut o);
-        assert!(o.y_reg == 0x81);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0x81);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2372,11 +2372,11 @@ mod tests {
         o.fetched_data = 0x04;
         o.set_flag(Flags6502::C, true);
         SBC(&mut o);
-        assert!(o.accumulator == 0x10);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0x10);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -2387,11 +2387,11 @@ mod tests {
         o.fetched_data = 0x40;
         o.set_flag(Flags6502::C, true);
         SBC(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
-        assert!(o.get_flag(Flags6502::Z) == 1);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
     }
 
     #[test]
@@ -2402,11 +2402,11 @@ mod tests {
         o.fetched_data = 0x15;
         o.set_flag(Flags6502::C, true);
         SBC(&mut o);
-        assert!(o.accumulator == 0xFF);
-        assert!(o.get_flag(Flags6502::V) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
-        assert!(o.get_flag(Flags6502::Z) == 0);
+        assert_eq!(o.accumulator, 0xFF);
+        assert_eq!(o.get_flag(Flags6502::V), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
     }
 
     #[test]
@@ -2418,8 +2418,8 @@ mod tests {
         o.fetched_data = 0x00;
         o.status_reg = 0xA4;
         SBC(&mut o);
-        assert!(o.accumulator == 0x7F);
-        assert!(o.status_reg == 0x65);
+        assert_eq!(o.accumulator, 0x7F);
+        assert_eq!(o.status_reg, 0x65);
     }
 
     #[test]
@@ -2429,9 +2429,9 @@ mod tests {
         o.accumulator = 0xF9;
         o.fetched_data = 0x45;
         ORA(&mut o);
-        assert!(o.accumulator == 0xFD);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xFD);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2441,9 +2441,9 @@ mod tests {
         o.accumulator = 0x00;
         o.fetched_data = 0x00;
         ORA(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2453,9 +2453,9 @@ mod tests {
         o.accumulator = 0x0F;
         o.fetched_data = 0x00;
         ORA(&mut o);
-        assert!(o.accumulator == 0x0F);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x0F);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2466,8 +2466,8 @@ mod tests {
         let old_stack_ptr = o.stack_ptr;
         o.accumulator = 0x14;
         PHA(&mut o);
-        assert!(o.bus.read(stack_end) == 0x14);
-        assert!(o.stack_ptr == old_stack_ptr - 1);
+        assert_eq!(o.bus.read(stack_end), 0x14);
+        assert_eq!(o.stack_ptr, old_stack_ptr - 1);
     }
 
     #[test]
@@ -2478,8 +2478,8 @@ mod tests {
         let old_stack_ptr = o.stack_ptr;
         o.status_reg = 0x14;
         PHP(&mut o);
-        assert!(o.bus.read(stack_end) == 0x34); // account for 'B flag' pushed as side effect
-        assert!(o.stack_ptr == old_stack_ptr - 1);
+        assert_eq!(o.bus.read(stack_end), 0x34); // account for 'B flag' pushed as side effect
+        assert_eq!(o.stack_ptr, old_stack_ptr - 1);
     }
 
     #[test]
@@ -2490,10 +2490,10 @@ mod tests {
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
         PLA(&mut o);
-        assert!(o.accumulator == 0x14);
-        assert!(o.stack_ptr == stack_end as u8);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x14);
+        assert_eq!(o.stack_ptr, stack_end as u8);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2504,10 +2504,10 @@ mod tests {
         o.bus.write(stack_end, 0x00);
         o.stack_ptr = (stack_end as u8) - 1;
         PLA(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.stack_ptr == stack_end as u8);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.stack_ptr, stack_end as u8);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2518,10 +2518,10 @@ mod tests {
         o.bus.write(stack_end, 0xF0);
         o.stack_ptr = (stack_end as u8) - 1;
         PLA(&mut o);
-        assert!(o.accumulator == 0xF0);
-        assert!(o.stack_ptr == stack_end as u8);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xF0);
+        assert_eq!(o.stack_ptr, stack_end as u8);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2532,8 +2532,8 @@ mod tests {
         o.bus.write(stack_end, 0x14);
         o.stack_ptr = (stack_end as u8) - 1;
         PLP(&mut o);
-        assert!(o.status_reg == 0x24); // account for ignoring bits 5 and 4
-        assert!(o.stack_ptr == stack_end as u8);
+        assert_eq!(o.status_reg, 0x24); // account for ignoring bits 5 and 4
+        assert_eq!(o.stack_ptr, stack_end as u8);
     }
 
     #[test]
@@ -2545,8 +2545,8 @@ mod tests {
         o.bus.write(stack_end, 0xFF);
         o.stack_ptr = (stack_end as u8) - 1;
         PLP(&mut o);
-        assert!(o.status_reg == 0xCF); // account for ignoring bits 5 and 4
-        assert!(o.stack_ptr == stack_end as u8);
+        assert_eq!(o.status_reg, 0xCF); // account for ignoring bits 5 and 4
+        assert_eq!(o.stack_ptr, stack_end as u8);
     }
 
     #[test]
@@ -2558,8 +2558,8 @@ mod tests {
         o.bus.write(stack_end, 0x00);
         o.stack_ptr = (stack_end as u8) - 1;
         PLP(&mut o);
-        assert!(o.status_reg == 0x30); // account for ignoring bits 5 and 4
-        assert!(o.stack_ptr == stack_end as u8);
+        assert_eq!(o.status_reg, 0x30); // account for ignoring bits 5 and 4
+        assert_eq!(o.stack_ptr, stack_end as u8);
     }
 
     #[test]
@@ -2569,7 +2569,7 @@ mod tests {
         o.addr_abs = 0x100;
         o.prog_ctr = 0xF;
         JMP(&mut o);
-        assert!(o.prog_ctr == 0x100);
+        assert_eq!(o.prog_ctr, 0x100);
     }
 
     #[test]
@@ -2581,9 +2581,9 @@ mod tests {
         JSR(&mut o);
         let lo = o.pop_from_stack();
         let hi = o.pop_from_stack();
-        assert!(o.prog_ctr == 0x1000);
-        assert!(lo == 0xAC);
-        assert!(hi == 0xDE);
+        assert_eq!(o.prog_ctr, 0x1000);
+        assert_eq!(lo, 0xAC);
+        assert_eq!(hi, 0xDE);
     }
 
     #[test]
@@ -2593,9 +2593,9 @@ mod tests {
         o.addr_abs = 0x1000;
         o.prog_ctr = 0xDEAD;
         JSR(&mut o);
-        assert!(o.prog_ctr == 0x1000);
+        assert_eq!(o.prog_ctr, 0x1000);
         RTS(&mut o);
-        assert!(o.prog_ctr == 0xDEAD);
+        assert_eq!(o.prog_ctr, 0xDEAD);
     }
     #[test]
     #[allow(non_snake_case)]
@@ -2603,9 +2603,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x04;
         LDA(&mut o);
-        assert!(o.accumulator == 0x04);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x04);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
 
@@ -2615,9 +2615,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDA(&mut o);
-        assert!(o.accumulator == 0xFA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xFA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2626,9 +2626,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x00;
         LDA(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2637,9 +2637,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x04;
         LDX(&mut o);
-        assert!(o.x_reg == 0x04);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x04);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2648,9 +2648,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDX(&mut o);
-        assert!(o.x_reg == 0xFA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0xFA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2659,9 +2659,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x00;
         LDX(&mut o);
-        assert!(o.x_reg == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.x_reg, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2670,9 +2670,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x04;
         LDY(&mut o);
-        assert!(o.y_reg == 0x04);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x04);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2681,9 +2681,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0xFA;
         LDY(&mut o);
-        assert!(o.y_reg == 0xFA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0xFA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2692,9 +2692,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.fetched_data = 0x00;
         LDY(&mut o);
-        assert!(o.y_reg == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.y_reg, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
     #[test]
     #[allow(non_snake_case)]
@@ -2704,10 +2704,10 @@ mod tests {
         o.addr_abs = 0x100;
         o.opcode = 0x0A; // to get an ASL with the Accum addressing mode
         LSR(&mut o);
-        assert!(o.accumulator == 0x00);
-        assert!(o.get_flag(Flags6502::Z) == 1);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.accumulator, 0x00);
+        assert_eq!(o.get_flag(Flags6502::Z), 1);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
     }
 
     #[test]
@@ -2717,10 +2717,10 @@ mod tests {
         o.fetched_data = 0x44;
         o.addr_abs = 0x100;
         LSR(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x22);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x22);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
     }
 
     #[test]
@@ -2732,10 +2732,10 @@ mod tests {
         o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
         o.set_flag(Flags6502::C, true);
         ROL(&mut o);
-        assert!(o.accumulator == 0x01);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.accumulator, 0x01);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
     }
 
     #[test]
@@ -2746,10 +2746,10 @@ mod tests {
         o.addr_abs = 0x100;
         o.set_flag(Flags6502::C, true);
         ROL(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0x8B);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0x8B);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
     }
 
     #[test]
@@ -2761,10 +2761,10 @@ mod tests {
         o.opcode = 0x0A; // to get an opcode with the Accum addressing mode
         o.set_flag(Flags6502::C, true);
         ROR(&mut o);
-        assert!(o.accumulator == 0x80);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.accumulator, 0x80);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
     }
 
     #[test]
@@ -2775,10 +2775,10 @@ mod tests {
         o.addr_abs = 0x100;
         o.set_flag(Flags6502::C, true);
         ROR(&mut o);
-        assert!(o.bus.read(o.addr_abs) == 0xA2);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
-        assert!(o.get_flag(Flags6502::C) == 0);
+        assert_eq!(o.bus.read(o.addr_abs), 0xA2);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
+        assert_eq!(o.get_flag(Flags6502::C), 0);
     }
 
 
@@ -2788,7 +2788,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::C, false);
         SEC(&mut o);
-        assert!(o.get_flag(Flags6502::C) == 1);
+        assert_eq!(o.get_flag(Flags6502::C), 1);
     }
 
     #[test]
@@ -2797,7 +2797,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::D, false);
         SED(&mut o);
-        assert!(o.get_flag(Flags6502::D) == 1);
+        assert_eq!(o.get_flag(Flags6502::D), 1);
     }
 
     #[test]
@@ -2806,7 +2806,7 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.set_flag(Flags6502::I, false);
         SEI(&mut o);
-        assert!(o.get_flag(Flags6502::I) == 1);
+        assert_eq!(o.get_flag(Flags6502::I), 1);
     }
 
     #[test]
@@ -2816,7 +2816,7 @@ mod tests {
         o.addr_abs = 0x100;
         o.accumulator = 0xDE;
         STA(&mut o);
-        assert!(o.bus.read(o.addr_abs) == o.accumulator);
+        assert_eq!(o.bus.read(o.addr_abs), o.accumulator);
     }
 
     #[test]
@@ -2826,7 +2826,7 @@ mod tests {
         o.addr_abs = 0x100;
         o.x_reg = 0xDE;
         STX(&mut o);
-        assert!(o.bus.read(o.addr_abs) == o.x_reg);
+        assert_eq!(o.bus.read(o.addr_abs), o.x_reg);
     }
 
     #[test]
@@ -2836,7 +2836,7 @@ mod tests {
         o.addr_abs = 0x100;
         o.y_reg = 0xDE;
         STY(&mut o);
-        assert!(o.bus.read(o.addr_abs) == o.y_reg);
+        assert_eq!(o.bus.read(o.addr_abs), o.y_reg);
     }
 
     #[test]
@@ -2845,9 +2845,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xEA;
         TAX(&mut o);
-        assert!(o.x_reg == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2856,9 +2856,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.accumulator = 0xEA;
         TAY(&mut o);
-        assert!(o.y_reg == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.y_reg, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2867,9 +2867,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.stack_ptr = 0xEA;
         TSX(&mut o);
-        assert!(o.x_reg == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.x_reg, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2878,9 +2878,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xEA;
         TXA(&mut o);
-        assert!(o.accumulator == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
 
     #[test]
@@ -2889,9 +2889,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.x_reg = 0xEA;
         TXS(&mut o);
-        assert!(o.stack_ptr == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 0);
+        assert_eq!(o.stack_ptr, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 0);
     }
 
     #[test]
@@ -2900,9 +2900,9 @@ mod tests {
         let mut o: Olc6502 = create_olc6502();
         o.y_reg = 0xEA;
         TYA(&mut o);
-        assert!(o.accumulator == 0xEA);
-        assert!(o.get_flag(Flags6502::Z) == 0);
-        assert!(o.get_flag(Flags6502::N) == 1);
+        assert_eq!(o.accumulator, 0xEA);
+        assert_eq!(o.get_flag(Flags6502::Z), 0);
+        assert_eq!(o.get_flag(Flags6502::N), 1);
     }
     // endregion
 
@@ -2916,7 +2916,7 @@ mod tests {
         o.bus.load_bytes_at(0x8000, assembled_source.clone());
         let read_program = o.bus.read_bytes_at(0x8000, program_length); 
         println!("{}", read_program);
-        assert!(read_program == assembled_source.replace(" ", ""));
+        assert_eq!(read_program, assembled_source.replace(" ", ""));
     }
 
     #[test]
@@ -2945,7 +2945,7 @@ mod tests {
         o.set_log_file("./log/multiply_10_by_3.log");
         o.load_program(assembled_source);
         o.run_program();
-        assert!(o.bus.read(0x0002) == 0x1E);
+        assert_eq!(o.bus.read(0x0002), 0x1E);
     }
 
     #[test]
@@ -2968,7 +2968,7 @@ mod tests {
         o.set_log_file("./log/short_loop.log");
         o.load_program(assembled_source);
         o.run_program();
-        assert!(o.bus.read(0x0201) == 0x03);
+        assert_eq!(o.bus.read(0x0201), 0x03);
     }
 //endregion
 }

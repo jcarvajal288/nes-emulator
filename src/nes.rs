@@ -83,7 +83,7 @@ mod tests {
         nes.ppu.cpu.set_log_file("./log/load_and_run_program.log");
         nes.load_program(assembled_source);
         nes.run_program();
-        assert!(nes.read_cpu_address(0x0201) == 0x03);
+        assert_eq!(nes.read_cpu_address(0x0201), 0x03);
     }
 
     #[test]
@@ -91,7 +91,7 @@ mod tests {
         let mut nes = create_nes();
         nes.load_rom("./test_files/nestest.nes");
         let result = nes.read_cpu_address(0x8000);
-        assert!(result == 0x4C);
+        assert_eq!(result, 0x4C);
     }
 
     #[test]
@@ -118,6 +118,6 @@ mod tests {
             }
             current_line += 1;
         }
-        assert!(current_line == 5004); // 5004 is the line where undocumented opcodes start being tested
+        assert_eq!(current_line, 5004); // 5004 is the line where undocumented opcodes start being tested
     }
 }
